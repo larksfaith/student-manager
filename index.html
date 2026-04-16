@@ -17,11 +17,9 @@
       --success: #059669;
       --danger: #dc2626;
       --warning: #d97706;
-      --day-hit: #7c3aed;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Noto Sans TC', sans-serif;
       background: var(--bg);
@@ -33,17 +31,45 @@
     header {
       background: linear-gradient(135deg, var(--primary-dark), var(--primary));
       color: white;
-      padding: 16px 28px;
+      padding: 14px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       box-shadow: 0 2px 10px rgba(124,58,237,0.35);
+      gap: 12px;
     }
-    header h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: 0.02em; }
-    header small { font-size: 0.8rem; opacity: 0.75; }
+    header h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: 0.02em; flex: 1; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    /* sync status badge */
+    .sync-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.78rem; opacity: 0.9;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: rgba(255,255,255,0.15);
+      white-space: nowrap;
+    }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #86efac; }
+    .sync-dot.off { background: #fca5a5; }
+    .sync-dot.loading { background: #fde68a; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .btn-icon {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255,255,255,0.18);
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .btn-icon:hover { background: rgba(255,255,255,0.3); }
 
     /* ── Nav ── */
-    .nav-wrap { padding: 18px 28px 0; display: flex; gap: 4px; }
+    .nav-wrap { padding: 16px 24px 0; display: flex; gap: 4px; }
     .nav-tab {
       padding: 10px 22px;
       border-radius: 10px 10px 0 0;
@@ -65,7 +91,7 @@
     /* ── Card ── */
     .card {
       background: var(--card);
-      margin: 0 28px 28px;
+      margin: 0 24px 28px;
       padding: 24px;
       border-radius: 0 12px 12px 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -74,95 +100,69 @@
 
     /* ── Toolbar ── */
     .toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-      gap: 10px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px; flex-wrap: wrap; gap: 10px;
     }
     .toolbar-title { font-size: 1.05rem; font-weight: 700; }
+    .toolbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
     /* ── Buttons ── */
     .btn {
-      padding: 8px 16px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.85rem;
-      font-weight: 600;
-      transition: all 0.18s;
-      line-height: 1;
+      padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; transition: all 0.18s;
+      display: inline-flex; align-items: center; gap: 5px; line-height: 1;
     }
-    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary  { background: var(--primary); color: white; }
     .btn-primary:hover { background: var(--primary-dark); }
-    .btn-sm { padding: 4px 10px; font-size: 0.78rem; }
-    .btn-edit { background: #ede9fe; color: var(--primary-dark); }
+    .btn-secondary { background: #ede9fe; color: var(--primary-dark); border: 1.5px solid #ddd6fe; }
+    .btn-secondary:hover { background: #ddd6fe; }
+    .btn-success  { background: #d1fae5; color: #065f46; border: 1.5px solid #a7f3d0; }
+    .btn-success:hover { background: #a7f3d0; }
+    .btn-sm       { padding: 4px 10px; font-size: 0.78rem; }
+    .btn-edit     { background: #ede9fe; color: var(--primary-dark); }
     .btn-edit:hover { background: #ddd6fe; }
-    .btn-delete { background: #fee2e2; color: var(--danger); }
+    .btn-delete   { background: #fee2e2; color: var(--danger); }
     .btn-delete:hover { background: #fecaca; }
-    .btn-cancel { background: var(--border); color: var(--text); }
+    .btn-cancel   { background: var(--border); color: var(--text); }
     .btn-cancel:hover { background: #d1d5db; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ── Table ── */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     th {
       background: #f5f3ff;
-      padding: 10px 8px;
-      text-align: center;
-      font-weight: 700;
-      color: var(--primary-dark);
-      border-bottom: 2px solid #ddd6fe;
-      white-space: nowrap;
+      padding: 10px 8px; text-align: center;
+      font-weight: 700; color: var(--primary-dark);
+      border-bottom: 2px solid #ddd6fe; white-space: nowrap;
     }
     th.left { text-align: left; }
-    td {
-      padding: 9px 8px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
+    td { padding: 9px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #faf5ff; }
-
     .day-cell { text-align: center; font-size: 1rem; }
 
-    /* total row */
     tfoot tr td {
-      background: #fef3c7;
-      font-weight: 700;
-      text-align: center;
-      border-top: 2px solid #fbbf24;
+      background: #fef3c7; font-weight: 700;
+      text-align: center; border-top: 2px solid #fbbf24;
     }
     tfoot tr td.left { text-align: left; }
 
     .count-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 26px;
-      height: 26px;
-      border-radius: 13px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      padding: 0 6px;
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 26px; height: 26px; border-radius: 13px;
+      font-size: 0.82rem; font-weight: 700; padding: 0 6px;
     }
-    .count-badge.has { background: var(--primary); color: white; }
+    .count-badge.has  { background: var(--primary); color: white; }
     .count-badge.zero { background: #e5e7eb; color: #9ca3af; }
 
     /* ── Tags ── */
     .tags { display: flex; flex-wrap: wrap; gap: 4px; max-width: 220px; }
-    .tag {
-      padding: 2px 9px;
-      border-radius: 9999px;
-      font-size: 0.73rem;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-    .tag-skill  { background: #dbeafe; color: #1d4ed8; }
-    .tag-song   { background: #fce7f3; color: #be185d; }
-    .tag-class  { background: #dcfce7; color: #166534; }
-    .tag-adv    { background: #fef3c7; color: #92400e; }
+    .tag { padding: 2px 9px; border-radius: 9999px; font-size: 0.73rem; font-weight: 600; white-space: nowrap; }
+    .tag-skill { background: #dbeafe; color: #1d4ed8; }
+    .tag-song  { background: #fce7f3; color: #be185d; }
+    .tag-class { background: #dcfce7; color: #166534; }
+    .tag-adv   { background: #fef3c7; color: #92400e; }
 
     /* ── Empty ── */
     .empty-cell { text-align: center; padding: 50px; color: var(--text-muted); font-size: 0.9rem; }
@@ -170,115 +170,132 @@
     /* ── Schedule sub-tabs ── */
     .sub-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
     .sub-tab {
-      padding: 8px 18px;
-      border-radius: 8px;
-      border: 2px solid var(--border);
-      background: white;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.85rem;
+      padding: 8px 18px; border-radius: 8px; border: 2px solid var(--border);
+      background: white; cursor: pointer; font-weight: 600; font-size: 0.85rem;
       transition: all 0.18s;
     }
     .sub-tab.active { border-color: var(--primary); background: #ede9fe; color: var(--primary-dark); }
-    .sub-desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px; padding: 8px 12px; background: #f5f3ff; border-radius: 8px; border-left: 3px solid var(--primary-light); }
+    .sub-desc {
+      font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;
+      padding: 8px 12px; background: #f5f3ff; border-radius: 8px;
+      border-left: 3px solid var(--primary-light);
+    }
 
     /* ── Modal ── */
     .overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.45);
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
       display: flex; align-items: center; justify-content: center;
-      z-index: 200; padding: 20px;
+      z-index: 200; padding: 16px;
     }
     .modal {
-      background: white;
-      border-radius: 14px;
-      padding: 28px;
-      width: 100%;
-      max-width: 620px;
-      max-height: 92vh;
-      overflow-y: auto;
+      background: white; border-radius: 14px; padding: 26px;
+      width: 100%; max-width: 620px; max-height: 92vh; overflow-y: auto;
       box-shadow: 0 24px 60px rgba(0,0,0,0.22);
     }
-    .modal h2 { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 22px; }
+    .modal h2 { font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 20px; }
 
     .form-row { display: flex; gap: 16px; }
     .form-row .form-group { flex: 1; }
-
     .form-group { margin-bottom: 16px; }
-    .form-group > label {
-      display: block;
-      margin-bottom: 7px;
-      font-weight: 700;
-      font-size: 0.85rem;
-      color: var(--text);
-    }
+    .form-group > label { display: block; margin-bottom: 7px; font-weight: 700; font-size: 0.85rem; }
     .form-group input[type="text"],
-    .form-group input[type="number"] {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.92rem;
-      font-family: inherit;
-      transition: border-color 0.18s;
+    .form-group input[type="number"],
+    .form-group textarea {
+      width: 100%; padding: 9px 12px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.92rem; font-family: inherit; transition: border-color 0.18s;
     }
-    .form-group input:focus { outline: none; border-color: var(--primary); }
+    .form-group input:focus,
+    .form-group textarea:focus { outline: none; border-color: var(--primary); }
+    .form-group textarea { resize: vertical; min-height: 64px; }
 
-    /* checkbox chips */
+    /* chips */
     .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
       display: flex; align-items: center; gap: 5px;
-      padding: 6px 13px;
-      border: 1.5px solid var(--border);
-      border-radius: 9999px;
-      cursor: pointer;
-      transition: all 0.18s;
-      user-select: none;
-      font-size: 0.85rem;
+      padding: 6px 13px; border: 1.5px solid var(--border);
+      border-radius: 9999px; cursor: pointer; transition: all 0.18s;
+      user-select: none; font-size: 0.85rem;
     }
     .chip input[type="checkbox"] { display: none; }
     .chip.checked { border-color: var(--primary); background: #ede9fe; color: var(--primary-dark); font-weight: 600; }
 
-    /* tags input box */
-    .tags-box {
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-    }
-    .selected-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; margin-bottom: 8px; }
+    /* tags box */
+    .tags-box { border: 1.5px solid var(--border); border-radius: 10px; padding: 10px; }
+    .selected-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; margin-bottom: 8px; }
     .sel-tag {
       display: inline-flex; align-items: center; gap: 4px;
-      padding: 3px 10px;
-      border-radius: 9999px;
-      font-size: 0.78rem;
-      font-weight: 600;
+      padding: 3px 10px; border-radius: 9999px; font-size: 0.78rem; font-weight: 600;
     }
     .sel-tag .x { cursor: pointer; opacity: 0.55; font-size: 0.7rem; line-height: 1; }
     .sel-tag .x:hover { opacity: 1; }
     .sug-tags { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 8px; border-bottom: 1px dashed var(--border); margin-bottom: 8px; }
     .sug-tag {
-      padding: 3px 10px;
-      border-radius: 9999px;
-      font-size: 0.78rem;
-      cursor: pointer;
-      border: 1.5px dashed #c4b5fd;
-      color: var(--primary);
+      padding: 3px 10px; border-radius: 9999px; font-size: 0.78rem;
+      cursor: pointer; border: 1.5px dashed #c4b5fd; color: var(--primary);
       transition: all 0.15s;
     }
     .sug-tag:hover { border-style: solid; background: #ede9fe; }
     .custom-add { display: flex; gap: 8px; }
     .custom-add input {
-      flex: 1; padding: 5px 10px;
-      border: 1.5px solid var(--border); border-radius: 7px;
-      font-size: 0.82rem; font-family: inherit;
+      flex: 1; padding: 5px 10px; border: 1.5px solid var(--border);
+      border-radius: 7px; font-size: 0.82rem; font-family: inherit;
     }
     .custom-add input:focus { outline: none; border-color: var(--primary); }
 
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+    .modal-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+    /* ── Settings Modal ── */
+    .settings-section { margin-bottom: 20px; }
+    .settings-section h3 { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .url-input-wrap { display: flex; gap: 8px; }
+    .url-input-wrap input { flex: 1; }
+    .setting-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+    .setting-hint a { color: var(--primary); }
+
+    .step-list { list-style: none; counter-reset: steps; }
+    .step-list li {
+      counter-increment: steps;
+      padding: 8px 0 8px 36px;
+      position: relative;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      border-bottom: 1px dashed var(--border);
+    }
+    .step-list li:last-child { border-bottom: none; }
+    .step-list li::before {
+      content: counter(steps);
+      position: absolute; left: 0; top: 8px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--primary); color: white;
+      font-size: 0.75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .code-block {
+      background: #1e1b4b; color: #e0e7ff;
+      padding: 12px 14px; border-radius: 8px;
+      font-family: 'Courier New', monospace; font-size: 0.8rem;
+      overflow-x: auto; margin: 8px 0;
+      line-height: 1.5;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 12px 18px; border-radius: 10px;
+      color: white; font-size: 0.88rem; font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      z-index: 999; transition: all 0.3s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .toast.success { background: #059669; }
+    .toast.error   { background: var(--danger); }
+    .toast.info    { background: var(--primary); }
+    .toast.hiding  { opacity: 0; transform: translateY(10px); }
 
     .hidden { display: none !important; }
 
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 3px; }
@@ -286,21 +303,30 @@
     @media (max-width: 700px) {
       .card { margin: 0 10px 20px; padding: 14px; }
       .nav-wrap { padding: 12px 10px 0; }
-      header { padding: 12px 16px; }
+      header { padding: 12px 14px; }
       .form-row { flex-direction: column; gap: 0; }
+      .url-input-wrap { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 
+<!-- ══ Header ══ -->
 <header>
   <h1>🎵 學生管理系統</h1>
-  <small>聲音教學工作室</small>
+  <div class="header-right">
+    <div class="sync-badge" id="sync-badge">
+      <span class="sync-dot off" id="sync-dot"></span>
+      <span id="sync-text">未連線</span>
+    </div>
+    <button class="btn-icon" onclick="openSettings()" title="設定 Google Sheets">⚙️</button>
+  </div>
 </header>
 
+<!-- ══ Nav ══ -->
 <div class="nav-wrap">
   <button class="nav-tab active" id="tab-students" onclick="showView('students')">📋 學生總表</button>
-  <button class="nav-tab" id="tab-schedule" onclick="showView('schedule')">📅 我要排課</button>
+  <button class="nav-tab" id="tab-schedule"  onclick="showView('schedule')">📅 我要排課</button>
 </div>
 
 <div class="card">
@@ -309,7 +335,15 @@
   <div id="view-students">
     <div class="toolbar">
       <span class="toolbar-title">所有學生</span>
-      <button class="btn btn-primary" onclick="openModal(null)">＋ 新增學生</button>
+      <div class="toolbar-right">
+        <button class="btn btn-secondary" id="btn-pull" onclick="pullFromSheets()" title="從 Google Sheet 載入最新資料">
+          ⬇ 從 Sheet 載入
+        </button>
+        <button class="btn btn-success" id="btn-push" onclick="pushToSheets()" title="將目前資料同步到 Google Sheet">
+          ⬆ 同步到 Sheet
+        </button>
+        <button class="btn btn-primary" onclick="openModal(null)">＋ 新增學生</button>
+      </div>
     </div>
     <div class="table-wrap">
       <table>
@@ -359,7 +393,7 @@
 
 </div>
 
-<!-- ═══ Modal ═══ -->
+<!-- ══ Student Modal ══ -->
 <div class="overlay hidden" id="overlay" onclick="overlayClick(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <h2 id="modal-title">新增學生</h2>
@@ -434,6 +468,77 @@
   </div>
 </div>
 
+<!-- ══ Settings Modal ══ -->
+<div class="overlay hidden" id="settings-overlay" onclick="settingsOverlayClick(event)">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:680px">
+    <h2>⚙️ Google Sheets 設定</h2>
+
+    <!-- URL Input -->
+    <div class="settings-section">
+      <h3>Apps Script 網址</h3>
+      <div class="url-input-wrap">
+        <input type="text" id="script-url" placeholder="https://script.google.com/macros/s/…/exec">
+        <button class="btn btn-primary" onclick="testAndSaveUrl()">✓ 儲存並測試</button>
+      </div>
+      <p class="setting-hint" id="url-status"></p>
+    </div>
+
+    <hr class="modal-divider">
+
+    <!-- How-to Guide -->
+    <div class="settings-section">
+      <h3>📖 如何設定（一次設定，永久使用）</h3>
+      <ol class="step-list">
+        <li>
+          打開你的 <strong>Google Sheet</strong>，點上方選單：<br>
+          <strong>擴充功能 → Apps Script</strong>
+        </li>
+        <li>
+          把 <code style="background:#f5f3ff;padding:2px 6px;border-radius:4px">Code.gs</code> 裡的程式碼全部貼進去（覆蓋原有內容），然後按 💾 儲存
+          <div class="code-hint" style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">
+            💡 程式碼在 student-manager/Code.gs 檔案裡
+          </div>
+        </li>
+        <li>
+          點右上角 <strong>「部署」→「新增部署」</strong>
+        </li>
+        <li>
+          選擇類型：<strong>網頁應用程式</strong><br>
+          • 執行身份：<strong>我（你的 Google 帳號）</strong><br>
+          • 誰可以存取：<strong>任何人</strong>
+        </li>
+        <li>
+          點 <strong>「部署」</strong>，複製產生的 <strong>網頁應用程式網址</strong>（格式：<code style="font-size:0.75rem">https://script.google.com/macros/s/…/exec</code>）
+        </li>
+        <li>
+          把網址貼到上方欄位，點「儲存並測試」
+        </li>
+      </ol>
+    </div>
+
+    <hr class="modal-divider">
+
+    <!-- Sheet Format -->
+    <div class="settings-section">
+      <h3>📊 工作表欄位格式</h3>
+      <p class="setting-hint">Apps Script 會自動辨識以下欄位名稱（第一列為標題）：</p>
+      <div class="code-block">姓名 ｜ 上過的班 ｜ 可上課時間 ｜ 學過的技巧 ｜ 學過的歌曲 ｜ 購買期數 ｜ 剩餘期數</div>
+      <p class="setting-hint">
+        多個值請用 <strong>「、」逗號或頓號</strong> 分隔，例如：<br>
+        上過的班 → <code style="background:#f5f3ff;padding:1px 5px;border-radius:3px">基礎班、第一實作班</code><br>
+        可上課時間 → <code style="background:#f5f3ff;padding:1px 5px;border-radius:3px">一、三、五</code>
+      </p>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeSettings()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Toast ══ -->
+<div class="toast hidden" id="toast"></div>
+
 <script>
 // ════════════════════════════════════════════════
 //  Constants
@@ -443,18 +548,15 @@ const CLASSES = ['基礎班','第一實作班','進階實作班'];
 
 const SCHEDULE_CONFIG = {
   first: {
-    label: '第一實作班',
-    desc:  '適合學生：已完成 基礎班，尚未上 第一實作班',
+    desc:   '適合學生：已完成「基礎班」，尚未上「第一實作班」',
     filter: s => has(s,'基礎班') && !has(s,'第一實作班')
   },
   big: {
-    label: '實作班（大班）',
-    desc:  '適合學生：已完成 基礎班，尚未上 第一實作班（安排成大班形式）',
+    desc:   '適合學生：已完成「基礎班」，尚未上「第一實作班」（大班形式安排）',
     filter: s => has(s,'基礎班') && !has(s,'第一實作班')
   },
   small: {
-    label: '實作班（小班）',
-    desc:  '適合學生：已完成 基礎班 及 第一實作班（進階小班）',
+    desc:   '適合學生：已完成「基礎班」及「第一實作班」（進階小班）',
     filter: s => has(s,'基礎班') && has(s,'第一實作班')
   }
 };
@@ -463,9 +565,10 @@ const SCHEDULE_CONFIG = {
 //  State
 // ════════════════════════════════════════════════
 let state = {
-  students: [],
+  students:  [],
   skillTags: ['彈音（節奏）','吐舌頭','音階練習','鼻腔共鳴','口腔共鳴','胸腔共鳴'],
-  songTags:  ['倒帶','讓我留在你身邊','路過人間','倔強','你的微笑']
+  songTags:  ['倒帶','讓我留在你身邊','路過人間','倔強','你的微笑'],
+  scriptUrl: ''
 };
 
 let tmpSkills = [];
@@ -474,13 +577,13 @@ let currentView = 'students';
 let currentSub  = 'first';
 
 // ════════════════════════════════════════════════
-//  Persistence
+//  Persistence (localStorage)
 // ════════════════════════════════════════════════
-function save() { localStorage.setItem('voiceStudio_v1', JSON.stringify(state)); }
+function save() { localStorage.setItem('voiceStudio_v2', JSON.stringify(state)); }
 function load() {
   try {
-    const d = localStorage.getItem('voiceStudio_v1');
-    if (d) state = JSON.parse(d);
+    const d = localStorage.getItem('voiceStudio_v2');
+    if (d) state = { ...state, ...JSON.parse(d) };
   } catch(e) {}
 }
 
@@ -494,16 +597,167 @@ function esc(str) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
 function dayCheck(s, d) {
   return (s.availability||[]).includes(d)
     ? '<span style="color:#059669;font-size:1.1em">✓</span>'
     : '<span style="color:#d1d5db">·</span>';
 }
+
 function classTags(s) {
   return (s.classes||[]).map(c => {
     const cls = c==='進階實作班' ? 'tag tag-adv' : 'tag tag-class';
     return `<span class="${cls}">${esc(c)}</span>`;
   }).join('') || '—';
+}
+
+// ════════════════════════════════════════════════
+//  Sync Status UI
+// ════════════════════════════════════════════════
+function setSyncStatus(status, msg) {
+  const dot  = document.getElementById('sync-dot');
+  const text = document.getElementById('sync-text');
+  dot.className = 'sync-dot ' + status;
+  text.textContent = msg;
+}
+
+function updateSyncBadge() {
+  if (state.scriptUrl) setSyncStatus('', '已連線 Sheet');
+  else                 setSyncStatus('off', '未連線');
+}
+
+// ════════════════════════════════════════════════
+//  Google Sheets — Pull
+// ════════════════════════════════════════════════
+async function pullFromSheets() {
+  if (!state.scriptUrl) { openSettings(); return; }
+
+  setSyncStatus('loading','載入中…');
+  const btn = document.getElementById('btn-pull');
+  btn.disabled = true;
+
+  try {
+    const data = await fetchScript(state.scriptUrl);
+    if (!data.success) throw new Error(data.error || '讀取失敗');
+
+    // Merge: prefer Sheet data, keep local skillTags/songTags merged
+    const sheetSkills = data.skillTags || [];
+    const sheetSongs  = data.songTags  || [];
+    state.skillTags = [...new Set([...state.skillTags, ...sheetSkills])];
+    state.songTags  = [...new Set([...state.songTags,  ...sheetSongs])];
+
+    // Assign fresh IDs so they don't conflict
+    state.students = (data.students || []).map(s => ({ ...s, id: uid() }));
+
+    save();
+    renderStudents();
+    if (currentView==='schedule') renderSchedule();
+    setSyncStatus('','已連線 Sheet');
+    showToast(`✅ 已載入 ${state.students.length} 位學生`, 'success');
+  } catch(e) {
+    setSyncStatus('off','連線失敗');
+    showToast('❌ 載入失敗：' + e.message, 'error');
+  }
+  btn.disabled = false;
+}
+
+// ════════════════════════════════════════════════
+//  Google Sheets — Push
+// ════════════════════════════════════════════════
+async function pushToSheets() {
+  if (!state.scriptUrl) { openSettings(); return; }
+  if (!state.students.length) { showToast('沒有資料可同步', 'info'); return; }
+  if (!confirm(`確定要將 ${state.students.length} 位學生資料同步到 Google Sheet 嗎？\n（這會覆蓋 Sheet 現有內容）`)) return;
+
+  setSyncStatus('loading','同步中…');
+  const btn = document.getElementById('btn-push');
+  btn.disabled = true;
+
+  try {
+    const data = await postScript(state.scriptUrl, {
+      action: 'save',
+      students: state.students,
+      skillTags: state.skillTags,
+      songTags:  state.songTags
+    });
+    if (!data.success) throw new Error(data.error || '寫入失敗');
+    setSyncStatus('','已連線 Sheet');
+    showToast('✅ 資料已同步到 Google Sheet！', 'success');
+  } catch(e) {
+    setSyncStatus('off','連線失敗');
+    showToast('❌ 同步失敗：' + e.message, 'error');
+  }
+  btn.disabled = false;
+}
+
+// ════════════════════════════════════════════════
+//  Fetch Helpers
+// ════════════════════════════════════════════════
+async function fetchScript(url) {
+  const res = await fetch(url, { redirect: 'follow' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function postScript(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    redirect: 'follow',
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ════════════════════════════════════════════════
+//  Settings Modal
+// ════════════════════════════════════════════════
+function openSettings() {
+  document.getElementById('script-url').value = state.scriptUrl || '';
+  document.getElementById('url-status').textContent = '';
+  document.getElementById('settings-overlay').classList.remove('hidden');
+}
+function closeSettings() { document.getElementById('settings-overlay').classList.add('hidden'); }
+function settingsOverlayClick(e) {
+  if (e.target === document.getElementById('settings-overlay')) closeSettings();
+}
+
+async function testAndSaveUrl() {
+  const url = document.getElementById('script-url').value.trim();
+  const statusEl = document.getElementById('url-status');
+
+  if (!url) { statusEl.textContent = '⚠️ 請輸入網址'; statusEl.style.color = 'var(--warning)'; return; }
+  if (!url.includes('script.google.com')) {
+    statusEl.textContent = '⚠️ 網址格式不正確，應為 script.google.com 開頭';
+    statusEl.style.color = 'var(--danger)'; return;
+  }
+
+  statusEl.textContent = '⏳ 測試連線中…';
+  statusEl.style.color = 'var(--text-muted)';
+
+  try {
+    const data = await fetchScript(url);
+    if (!data.success) throw new Error(data.error);
+
+    state.scriptUrl = url;
+    save();
+    updateSyncBadge();
+    statusEl.textContent = `✅ 連線成功！找到 ${(data.students||[]).length} 位學生`;
+    statusEl.style.color = 'var(--success)';
+
+    // Auto-import if no local data
+    if (!state.students.length && data.students && data.students.length) {
+      state.skillTags = [...new Set([...state.skillTags, ...(data.skillTags||[])])];
+      state.songTags  = [...new Set([...state.songTags,  ...(data.songTags||[])])];
+      state.students  = data.students.map(s => ({ ...s, id: uid() }));
+      save();
+      renderStudents();
+      statusEl.textContent += `（已自動匯入）`;
+    }
+  } catch(e) {
+    statusEl.textContent = '❌ 連線失敗：' + e.message;
+    statusEl.style.color = 'var(--danger)';
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -526,7 +780,12 @@ function renderStudents() {
   const tfoot = document.getElementById('t-foot');
 
   if (!state.students.length) {
-    tbody.innerHTML = `<tr><td colspan="14" class="empty-cell">尚無學生資料，點擊「＋ 新增學生」開始建立</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="14" class="empty-cell">
+      尚無學生資料<br>
+      <span style="font-size:0.8rem;margin-top:6px;display:block">
+        點「⬇ 從 Sheet 載入」匯入現有資料，或點「＋ 新增學生」手動新增
+      </span>
+    </td></tr>`;
     tfoot.innerHTML = '';
     return;
   }
@@ -565,9 +824,9 @@ function renderStudents() {
 // ════════════════════════════════════════════════
 function showSubTab(tab) {
   currentSub = tab;
-  ['first','big','small'].forEach(t => {
-    document.getElementById(`stab-${t}`).classList.toggle('active', t===tab);
-  });
+  ['first','big','small'].forEach(t =>
+    document.getElementById(`stab-${t}`).classList.toggle('active', t===tab)
+  );
   renderSchedule();
 }
 
@@ -575,7 +834,7 @@ function renderSchedule() {
   const cfg = SCHEDULE_CONFIG[currentSub];
   document.getElementById('sub-desc').textContent = cfg.desc;
 
-  const list = state.students.filter(cfg.filter);
+  const list  = state.students.filter(cfg.filter);
   const tbody = document.getElementById('s-body');
   const tfoot = document.getElementById('s-foot');
 
@@ -602,10 +861,9 @@ function renderSchedule() {
 }
 
 // ════════════════════════════════════════════════
-//  Modal — open / close
+//  Student Modal
 // ════════════════════════════════════════════════
 function openModal(id) {
-  // Reset form
   document.getElementById('edit-id').value = '';
   document.getElementById('f-name').value = '';
   document.getElementById('f-purchased').value = '';
@@ -631,7 +889,7 @@ function openModal(id) {
     document.getElementById('modal-title').textContent = '新增學生';
   }
 
-  // Chip toggle listeners (re-attach)
+  // Re-attach chip click listeners
   document.querySelectorAll('#f-classes .chip, #f-days .chip').forEach(chip => {
     chip.onclick = () => {
       const cb = chip.querySelector('input[type=checkbox]');
@@ -642,7 +900,7 @@ function openModal(id) {
 
   renderTagUI();
   document.getElementById('overlay').classList.remove('hidden');
-  document.getElementById('f-name').focus();
+  setTimeout(() => document.getElementById('f-name').focus(), 50);
 }
 
 function closeModal() { document.getElementById('overlay').classList.add('hidden'); }
@@ -661,8 +919,8 @@ function setChip(id, checked) {
 function renderTagUI() {
   renderSelected('sel-skills', tmpSkills, 'tag-skill', 'skill');
   renderSelected('sel-songs',  tmpSongs,  'tag-song',  'song');
-  renderSuggestions('sug-skills', state.skillTags, tmpSkills, 'skill');
-  renderSuggestions('sug-songs',  state.songTags,  tmpSongs,  'song');
+  renderSugs('sug-skills', state.skillTags, tmpSkills, 'skill');
+  renderSugs('sug-songs',  state.songTags,  tmpSongs,  'song');
 }
 
 function renderSelected(elId, arr, cls, key) {
@@ -671,13 +929,13 @@ function renderSelected(elId, arr, cls, key) {
   ).join('');
 }
 
-function renderSuggestions(elId, all, selected, key) {
+function renderSugs(elId, all, selected, key) {
   const unused = all.filter(t => !selected.includes(t));
-  document.getElementById(elId).innerHTML = unused.map(t =>
+  const el = document.getElementById(elId);
+  el.innerHTML = unused.map(t =>
     `<span class="sug-tag" onclick="pickTag('${key}','${esc(t).replace(/'/g,"\\'")}')">＋ ${esc(t)}</span>`
   ).join('');
-  // hide if empty
-  document.getElementById(elId).style.display = unused.length ? '' : 'none';
+  el.style.display = unused.length ? '' : 'none';
 }
 
 function pickTag(key, tag) {
@@ -717,13 +975,12 @@ function saveStudent() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { alert('請輸入學生姓名！'); return; }
 
-  const classes = [...document.querySelectorAll('#f-classes input:checked')].map(c=>c.value);
-  const avail   = [...document.querySelectorAll('#f-days input:checked')].map(c=>c.value);
-  const purchased = parseInt(document.getElementById('f-purchased').value) || 0;
-  const remaining = parseInt(document.getElementById('f-remaining').value) || 0;
-
-  const id = document.getElementById('edit-id').value;
-  const data = { name, classes, availability: avail, skills: tmpSkills, songs: tmpSongs, purchased, remaining };
+  const classes    = [...document.querySelectorAll('#f-classes input:checked')].map(c=>c.value);
+  const avail      = [...document.querySelectorAll('#f-days input:checked')].map(c=>c.value);
+  const purchased  = parseInt(document.getElementById('f-purchased').value) || 0;
+  const remaining  = parseInt(document.getElementById('f-remaining').value) || 0;
+  const id         = document.getElementById('edit-id').value;
+  const data       = { name, classes, availability: avail, skills: tmpSkills, songs: tmpSongs, purchased, remaining };
 
   if (id) {
     const idx = state.students.findIndex(s=>s.id===id);
@@ -749,9 +1006,25 @@ function delStudent(id) {
 }
 
 // ════════════════════════════════════════════════
-//  Boot
+//  Toast
+// ════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.classList.add('hiding');
+    setTimeout(() => el.classList.add('hidden'), 300);
+  }, 3000);
+}
+
+// ════════════════════════════════════════════════
+//  Init
 // ════════════════════════════════════════════════
 load();
+updateSyncBadge();
 renderStudents();
 </script>
 </body>
