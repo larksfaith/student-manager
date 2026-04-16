@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>聲音教學 — 學生管理系統</title>
+  <style>
+    :root {
+      --primary: #7c3aed;
+      --primary-light: #a78bfa;
+      --primary-dark: #5b21b6;
+      --bg: #f5f3ff;
+      --card: #ffffff;
+      --text: #1e1b4b;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --success: #059669;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --day-hit: #7c3aed;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Noto Sans TC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: white;
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(124,58,237,0.35);
+    }
+    header h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: 0.02em; }
+    header small { font-size: 0.8rem; opacity: 0.75; }
+
+    /* ── Nav ── */
+    .nav-wrap { padding: 18px 28px 0; display: flex; gap: 4px; }
+    .nav-tab {
+      padding: 10px 22px;
+      border-radius: 10px 10px 0 0;
+      background: #ede9fe;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: none;
+      transition: all 0.18s;
+    }
+    .nav-tab.active {
+      background: var(--card);
+      color: var(--primary-dark);
+      border-top: 3px solid var(--primary);
+      box-shadow: 0 -1px 4px rgba(124,58,237,0.1);
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      margin: 0 28px 28px;
+      padding: 24px;
+      border-radius: 0 12px 12px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      min-height: calc(100vh - 130px);
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .toolbar-title { font-size: 1.05rem; font-weight: 700; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.18s;
+      line-height: 1;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-sm { padding: 4px 10px; font-size: 0.78rem; }
+    .btn-edit { background: #ede9fe; color: var(--primary-dark); }
+    .btn-edit:hover { background: #ddd6fe; }
+    .btn-delete { background: #fee2e2; color: var(--danger); }
+    .btn-delete:hover { background: #fecaca; }
+    .btn-cancel { background: var(--border); color: var(--text); }
+    .btn-cancel:hover { background: #d1d5db; }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th {
+      background: #f5f3ff;
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: 700;
+      color: var(--primary-dark);
+      border-bottom: 2px solid #ddd6fe;
+      white-space: nowrap;
+    }
+    th.left { text-align: left; }
+    td {
+      padding: 9px 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #faf5ff; }
+
+    .day-cell { text-align: center; font-size: 1rem; }
+
+    /* total row */
+    tfoot tr td {
+      background: #fef3c7;
+      font-weight: 700;
+      text-align: center;
+      border-top: 2px solid #fbbf24;
+    }
+    tfoot tr td.left { text-align: left; }
+
+    .count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 26px;
+      height: 26px;
+      border-radius: 13px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0 6px;
+    }
+    .count-badge.has { background: var(--primary); color: white; }
+    .count-badge.zero { background: #e5e7eb; color: #9ca3af; }
+
+    /* ── Tags ── */
+    .tags { display: flex; flex-wrap: wrap; gap: 4px; max-width: 220px; }
+    .tag {
+      padding: 2px 9px;
+      border-radius: 9999px;
+      font-size: 0.73rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .tag-skill  { background: #dbeafe; color: #1d4ed8; }
+    .tag-song   { background: #fce7f3; color: #be185d; }
+    .tag-class  { background: #dcfce7; color: #166534; }
+    .tag-adv    { background: #fef3c7; color: #92400e; }
+
+    /* ── Empty ── */
+    .empty-cell { text-align: center; padding: 50px; color: var(--text-muted); font-size: 0.9rem; }
+
+    /* ── Schedule sub-tabs ── */
+    .sub-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .sub-tab {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.18s;
+    }
+    .sub-tab.active { border-color: var(--primary); background: #ede9fe; color: var(--primary-dark); }
+    .sub-desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px; padding: 8px 12px; background: #f5f3ff; border-radius: 8px; border-left: 3px solid var(--primary-light); }
+
+    /* ── Modal ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200; padding: 20px;
+    }
+    .modal {
+      background: white;
+      border-radius: 14px;
+      padding: 28px;
+      width: 100%;
+      max-width: 620px;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+    }
+    .modal h2 { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 22px; }
+
+    .form-row { display: flex; gap: 16px; }
+    .form-row .form-group { flex: 1; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group > label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .form-group input[type="text"],
+    .form-group input[type="number"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      transition: border-color 0.18s;
+    }
+    .form-group input:focus { outline: none; border-color: var(--primary); }
+
+    /* checkbox chips */
+    .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.18s;
+      user-select: none;
+      font-size: 0.85rem;
+    }
+    .chip input[type="checkbox"] { display: none; }
+    .chip.checked { border-color: var(--primary); background: #ede9fe; color: var(--primary-dark); font-weight: 600; }
+
+    /* tags input box */
+    .tags-box {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .selected-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; margin-bottom: 8px; }
+    .sel-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .sel-tag .x { cursor: pointer; opacity: 0.55; font-size: 0.7rem; line-height: 1; }
+    .sel-tag .x:hover { opacity: 1; }
+    .sug-tags { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 8px; border-bottom: 1px dashed var(--border); margin-bottom: 8px; }
+    .sug-tag {
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      border: 1.5px dashed #c4b5fd;
+      color: var(--primary);
+      transition: all 0.15s;
+    }
+    .sug-tag:hover { border-style: solid; background: #ede9fe; }
+    .custom-add { display: flex; gap: 8px; }
+    .custom-add input {
+      flex: 1; padding: 5px 10px;
+      border: 1.5px solid var(--border); border-radius: 7px;
+      font-size: 0.82rem; font-family: inherit;
+    }
+    .custom-add input:focus { outline: none; border-color: var(--primary); }
+
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+    .hidden { display: none !important; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 3px; }
+
+    @media (max-width: 700px) {
+      .card { margin: 0 10px 20px; padding: 14px; }
+      .nav-wrap { padding: 12px 10px 0; }
+      header { padding: 12px 16px; }
+      .form-row { flex-direction: column; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎵 學生管理系統</h1>
+  <small>聲音教學工作室</small>
+</header>
+
+<div class="nav-wrap">
+  <button class="nav-tab active" id="tab-students" onclick="showView('students')">📋 學生總表</button>
+  <button class="nav-tab" id="tab-schedule" onclick="showView('schedule')">📅 我要排課</button>
+</div>
+
+<div class="card">
+
+  <!-- ═══ 學生總表 ═══ -->
+  <div id="view-students">
+    <div class="toolbar">
+      <span class="toolbar-title">所有學生</span>
+      <button class="btn btn-primary" onclick="openModal(null)">＋ 新增學生</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="left" style="min-width:80px">姓名</th>
+            <th style="min-width:130px">上過的班</th>
+            <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
+            <th style="min-width:160px">學過的技巧</th>
+            <th style="min-width:160px">學過的歌曲</th>
+            <th>購買</th>
+            <th>剩餘</th>
+            <th style="min-width:90px">操作</th>
+          </tr>
+        </thead>
+        <tbody id="t-body"></tbody>
+        <tfoot id="t-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ 排課 ═══ -->
+  <div id="view-schedule" class="hidden">
+    <div class="toolbar">
+      <span class="toolbar-title">排課規劃</span>
+    </div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" id="stab-first" onclick="showSubTab('first')">第一實作班</button>
+      <button class="sub-tab" id="stab-big"   onclick="showSubTab('big')">實作班（大班）</button>
+      <button class="sub-tab" id="stab-small" onclick="showSubTab('small')">實作班（小班）</button>
+    </div>
+    <div class="sub-desc" id="sub-desc"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="left" style="min-width:80px">姓名</th>
+            <th style="min-width:130px">上過的班</th>
+            <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
+          </tr>
+        </thead>
+        <tbody id="s-body"></tbody>
+        <tfoot id="s-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ Modal ═══ -->
+<div class="overlay hidden" id="overlay" onclick="overlayClick(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2 id="modal-title">新增學生</h2>
+    <input type="hidden" id="edit-id">
+
+    <div class="form-group">
+      <label>學生姓名 <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="f-name" placeholder="輸入學生姓名">
+    </div>
+
+    <div class="form-group">
+      <label>上過的班</label>
+      <div class="chip-group" id="f-classes">
+        <label class="chip" id="chip-基礎班"><input type="checkbox" value="基礎班">基礎班</label>
+        <label class="chip" id="chip-第一實作班"><input type="checkbox" value="第一實作班">第一實作班</label>
+        <label class="chip" id="chip-進階實作班"><input type="checkbox" value="進階實作班">進階實作班</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>可上課時間</label>
+      <div class="chip-group" id="f-days">
+        <label class="chip" id="chip-一"><input type="checkbox" value="一">週一</label>
+        <label class="chip" id="chip-二"><input type="checkbox" value="二">週二</label>
+        <label class="chip" id="chip-三"><input type="checkbox" value="三">週三</label>
+        <label class="chip" id="chip-四"><input type="checkbox" value="四">週四</label>
+        <label class="chip" id="chip-五"><input type="checkbox" value="五">週五</label>
+        <label class="chip" id="chip-六"><input type="checkbox" value="六">週六</label>
+        <label class="chip" id="chip-日"><input type="checkbox" value="日">週日</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>學過的技巧</label>
+      <div class="tags-box">
+        <div class="selected-tags" id="sel-skills"></div>
+        <div class="sug-tags" id="sug-skills"></div>
+        <div class="custom-add">
+          <input type="text" id="custom-skill" placeholder="輸入新技巧…" onkeydown="customKeydown(event,'skill')">
+          <button class="btn btn-sm btn-primary" onclick="addCustom('skill')">新增</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>學過的歌曲</label>
+      <div class="tags-box">
+        <div class="selected-tags" id="sel-songs"></div>
+        <div class="sug-tags" id="sug-songs"></div>
+        <div class="custom-add">
+          <input type="text" id="custom-song" placeholder="輸入新歌曲…" onkeydown="customKeydown(event,'song')">
+          <button class="btn btn-sm btn-primary" onclick="addCustom('song')">新增</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>購買期數</label>
+        <input type="number" id="f-purchased" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>剩餘期數</label>
+        <input type="number" id="f-remaining" min="0" placeholder="0">
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveStudent()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  Constants
+// ════════════════════════════════════════════════
+const DAYS    = ['一','二','三','四','五','六','日'];
+const CLASSES = ['基礎班','第一實作班','進階實作班'];
+
+const SCHEDULE_CONFIG = {
+  first: {
+    label: '第一實作班',
+    desc:  '適合學生：已完成 基礎班，尚未上 第一實作班',
+    filter: s => has(s,'基礎班') && !has(s,'第一實作班')
+  },
+  big: {
+    label: '實作班（大班）',
+    desc:  '適合學生：已完成 基礎班，尚未上 第一實作班（安排成大班形式）',
+    filter: s => has(s,'基礎班') && !has(s,'第一實作班')
+  },
+  small: {
+    label: '實作班（小班）',
+    desc:  '適合學生：已完成 基礎班 及 第一實作班（進階小班）',
+    filter: s => has(s,'基礎班') && has(s,'第一實作班')
+  }
+};
+
+// ════════════════════════════════════════════════
+//  State
+// ════════════════════════════════════════════════
+let state = {
+  students: [],
+  skillTags: ['彈音（節奏）','吐舌頭','音階練習','鼻腔共鳴','口腔共鳴','胸腔共鳴'],
+  songTags:  ['倒帶','讓我留在你身邊','路過人間','倔強','你的微笑']
+};
+
+let tmpSkills = [];
+let tmpSongs  = [];
+let currentView = 'students';
+let currentSub  = 'first';
+
+// ════════════════════════════════════════════════
+//  Persistence
+// ════════════════════════════════════════════════
+function save() { localStorage.setItem('voiceStudio_v1', JSON.stringify(state)); }
+function load() {
+  try {
+    const d = localStorage.getItem('voiceStudio_v1');
+    if (d) state = JSON.parse(d);
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════
+//  Helpers
+// ════════════════════════════════════════════════
+function has(s, cls) { return (s.classes||[]).includes(cls); }
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function dayCheck(s, d) {
+  return (s.availability||[]).includes(d)
+    ? '<span style="color:#059669;font-size:1.1em">✓</span>'
+    : '<span style="color:#d1d5db">·</span>';
+}
+function classTags(s) {
+  return (s.classes||[]).map(c => {
+    const cls = c==='進階實作班' ? 'tag tag-adv' : 'tag tag-class';
+    return `<span class="${cls}">${esc(c)}</span>`;
+  }).join('') || '—';
+}
+
+// ════════════════════════════════════════════════
+//  Views
+// ════════════════════════════════════════════════
+function showView(v) {
+  currentView = v;
+  document.getElementById('tab-students').classList.toggle('active', v==='students');
+  document.getElementById('tab-schedule').classList.toggle('active', v==='schedule');
+  document.getElementById('view-students').classList.toggle('hidden', v!=='students');
+  document.getElementById('view-schedule').classList.toggle('hidden', v!=='schedule');
+  v==='students' ? renderStudents() : renderSchedule();
+}
+
+// ════════════════════════════════════════════════
+//  Students Table
+// ════════════════════════════════════════════════
+function renderStudents() {
+  const tbody = document.getElementById('t-body');
+  const tfoot = document.getElementById('t-foot');
+
+  if (!state.students.length) {
+    tbody.innerHTML = `<tr><td colspan="14" class="empty-cell">尚無學生資料，點擊「＋ 新增學生」開始建立</td></tr>`;
+    tfoot.innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = state.students.map(s => {
+    const skills = (s.skills||[]).map(sk=>`<span class="tag tag-skill">${esc(sk)}</span>`).join('') || '—';
+    const songs  = (s.songs||[]).map(sg=>`<span class="tag tag-song">${esc(sg)}</span>`).join('') || '—';
+    const days   = DAYS.map(d=>`<td class="day-cell">${dayCheck(s,d)}</td>`).join('');
+    return `<tr>
+      <td style="font-weight:700">${esc(s.name)}</td>
+      <td><div class="tags">${classTags(s)}</div></td>
+      ${days}
+      <td><div class="tags">${skills}</div></td>
+      <td><div class="tags">${songs}</div></td>
+      <td style="text-align:center">${s.purchased??'—'}</td>
+      <td style="text-align:center">${s.remaining??'—'}</td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-sm btn-edit"   onclick='openModal("${s.id}")'>編輯</button>
+          <button class="btn btn-sm btn-delete" onclick='delStudent("${s.id}")'>刪除</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const totals = DAYS.map(d => state.students.filter(s=>(s.availability||[]).includes(d)).length);
+  tfoot.innerHTML = `<tr>
+    <td class="left" colspan="2" style="font-weight:800">每日可上課人數</td>
+    ${totals.map(n=>`<td><span class="count-badge ${n?'has':'zero'}">${n}</span></td>`).join('')}
+    <td colspan="4"></td>
+  </tr>`;
+}
+
+// ════════════════════════════════════════════════
+//  Schedule
+// ════════════════════════════════════════════════
+function showSubTab(tab) {
+  currentSub = tab;
+  ['first','big','small'].forEach(t => {
+    document.getElementById(`stab-${t}`).classList.toggle('active', t===tab);
+  });
+  renderSchedule();
+}
+
+function renderSchedule() {
+  const cfg = SCHEDULE_CONFIG[currentSub];
+  document.getElementById('sub-desc').textContent = cfg.desc;
+
+  const list = state.students.filter(cfg.filter);
+  const tbody = document.getElementById('s-body');
+  const tfoot = document.getElementById('s-foot');
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">目前沒有符合條件的學生</td></tr>`;
+    tfoot.innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = list.map(s => {
+    const days = DAYS.map(d=>`<td class="day-cell">${dayCheck(s,d)}</td>`).join('');
+    return `<tr>
+      <td style="font-weight:700">${esc(s.name)}</td>
+      <td><div class="tags">${classTags(s)}</div></td>
+      ${days}
+    </tr>`;
+  }).join('');
+
+  const totals = DAYS.map(d => list.filter(s=>(s.availability||[]).includes(d)).length);
+  tfoot.innerHTML = `<tr>
+    <td class="left" colspan="2" style="font-weight:800">可上課人數</td>
+    ${totals.map(n=>`<td><span class="count-badge ${n?'has':'zero'}">${n}</span></td>`).join('')}
+  </tr>`;
+}
+
+// ════════════════════════════════════════════════
+//  Modal — open / close
+// ════════════════════════════════════════════════
+function openModal(id) {
+  // Reset form
+  document.getElementById('edit-id').value = '';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-purchased').value = '';
+  document.getElementById('f-remaining').value = '';
+  CLASSES.forEach(c => setChip('chip-'+c, false));
+  DAYS.forEach(d => setChip('chip-'+d, false));
+  tmpSkills = [];
+  tmpSongs  = [];
+
+  if (id) {
+    const s = state.students.find(x=>x.id===id);
+    if (!s) return;
+    document.getElementById('modal-title').textContent = '編輯學生';
+    document.getElementById('edit-id').value = id;
+    document.getElementById('f-name').value = s.name;
+    document.getElementById('f-purchased').value = s.purchased ?? '';
+    document.getElementById('f-remaining').value  = s.remaining ?? '';
+    (s.classes||[]).forEach(c => setChip('chip-'+c, true));
+    (s.availability||[]).forEach(d => setChip('chip-'+d, true));
+    tmpSkills = [...(s.skills||[])];
+    tmpSongs  = [...(s.songs||[])];
+  } else {
+    document.getElementById('modal-title').textContent = '新增學生';
+  }
+
+  // Chip toggle listeners (re-attach)
+  document.querySelectorAll('#f-classes .chip, #f-days .chip').forEach(chip => {
+    chip.onclick = () => {
+      const cb = chip.querySelector('input[type=checkbox]');
+      cb.checked = !cb.checked;
+      chip.classList.toggle('checked', cb.checked);
+    };
+  });
+
+  renderTagUI();
+  document.getElementById('overlay').classList.remove('hidden');
+  document.getElementById('f-name').focus();
+}
+
+function closeModal() { document.getElementById('overlay').classList.add('hidden'); }
+function overlayClick(e) { if (e.target===document.getElementById('overlay')) closeModal(); }
+
+function setChip(id, checked) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.querySelector('input').checked = checked;
+  el.classList.toggle('checked', checked);
+}
+
+// ════════════════════════════════════════════════
+//  Tags UI
+// ════════════════════════════════════════════════
+function renderTagUI() {
+  renderSelected('sel-skills', tmpSkills, 'tag-skill', 'skill');
+  renderSelected('sel-songs',  tmpSongs,  'tag-song',  'song');
+  renderSuggestions('sug-skills', state.skillTags, tmpSkills, 'skill');
+  renderSuggestions('sug-songs',  state.songTags,  tmpSongs,  'song');
+}
+
+function renderSelected(elId, arr, cls, key) {
+  document.getElementById(elId).innerHTML = arr.map((t,i) =>
+    `<span class="sel-tag ${cls}">${esc(t)}<span class="x" onclick="removeTag('${key}',${i})">✕</span></span>`
+  ).join('');
+}
+
+function renderSuggestions(elId, all, selected, key) {
+  const unused = all.filter(t => !selected.includes(t));
+  document.getElementById(elId).innerHTML = unused.map(t =>
+    `<span class="sug-tag" onclick="pickTag('${key}','${esc(t).replace(/'/g,"\\'")}')">＋ ${esc(t)}</span>`
+  ).join('');
+  // hide if empty
+  document.getElementById(elId).style.display = unused.length ? '' : 'none';
+}
+
+function pickTag(key, tag) {
+  if (key==='skill') { if (!tmpSkills.includes(tag)) tmpSkills.push(tag); }
+  else               { if (!tmpSongs.includes(tag))  tmpSongs.push(tag);  }
+  renderTagUI();
+}
+
+function removeTag(key, i) {
+  if (key==='skill') tmpSkills.splice(i,1);
+  else               tmpSongs.splice(i,1);
+  renderTagUI();
+}
+
+function addCustom(key) {
+  const inp = document.getElementById('custom-'+key);
+  const val = inp.value.trim();
+  if (!val) return;
+  if (key==='skill') {
+    if (!state.skillTags.includes(val)) state.skillTags.push(val);
+    if (!tmpSkills.includes(val)) tmpSkills.push(val);
+  } else {
+    if (!state.songTags.includes(val)) state.songTags.push(val);
+    if (!tmpSongs.includes(val)) tmpSongs.push(val);
+  }
+  inp.value = '';
+  save();
+  renderTagUI();
+}
+
+function customKeydown(e, key) { if (e.key==='Enter') { e.preventDefault(); addCustom(key); } }
+
+// ════════════════════════════════════════════════
+//  Save / Delete
+// ════════════════════════════════════════════════
+function saveStudent() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('請輸入學生姓名！'); return; }
+
+  const classes = [...document.querySelectorAll('#f-classes input:checked')].map(c=>c.value);
+  const avail   = [...document.querySelectorAll('#f-days input:checked')].map(c=>c.value);
+  const purchased = parseInt(document.getElementById('f-purchased').value) || 0;
+  const remaining = parseInt(document.getElementById('f-remaining').value) || 0;
+
+  const id = document.getElementById('edit-id').value;
+  const data = { name, classes, availability: avail, skills: tmpSkills, songs: tmpSongs, purchased, remaining };
+
+  if (id) {
+    const idx = state.students.findIndex(s=>s.id===id);
+    if (idx>-1) state.students[idx] = { id, ...data };
+  } else {
+    state.students.push({ id: uid(), ...data });
+  }
+
+  save();
+  closeModal();
+  renderStudents();
+  if (currentView==='schedule') renderSchedule();
+}
+
+function delStudent(id) {
+  const s = state.students.find(x=>x.id===id);
+  if (!s) return;
+  if (!confirm(`確定要刪除「${s.name}」的資料嗎？`)) return;
+  state.students = state.students.filter(x=>x.id!==id);
+  save();
+  renderStudents();
+  if (currentView==='schedule') renderSchedule();
+}
+
+// ════════════════════════════════════════════════
+//  Boot
+// ════════════════════════════════════════════════
+load();
+renderStudents();
+</script>
+</body>
+</html>
