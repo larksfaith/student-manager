@@ -984,11 +984,19 @@ function setChip(id, checked) {
 // ════════════════════════════════════════════════
 //  Tags UI
 // ════════════════════════════════════════════════
+// 按筆畫排序（利用 localeCompare stroke 排序）
+function sortByStrokes(arr) {
+  return [...arr].sort((a, b) =>
+    a.localeCompare(b, 'zh-TW-u-co-stroke')
+  );
+}
+
 function renderTagUI() {
+  tmpSongs = sortByStrokes(tmpSongs);
   renderSelected('sel-skills', tmpSkills, 'tag-skill', 'skill');
-  renderSelected('sel-songs',  tmpSongs,  'tag-song',  'song');
+  renderSelectedSongs('sel-songs', tmpSongs);
   renderSugs('sug-skills', state.skillTags, tmpSkills, 'skill');
-  renderSugs('sug-songs',  state.songTags,  tmpSongs,  'song');
+  renderSugsSongs('sug-songs', state.songTags, tmpSongs);
 }
 
 function renderSelected(elId, arr, cls, key) {
@@ -997,11 +1005,28 @@ function renderSelected(elId, arr, cls, key) {
   ).join('');
 }
 
+function renderSelectedSongs(elId, arr) {
+  document.getElementById(elId).innerHTML = arr.map((t,i) =>
+    `<span class="sel-tag tag-song" title="右鍵刪除" oncontextmenu="removeSelectedSong(event,${i})">${esc(t)}<span class="x" onclick="removeTag('song',${i})">✕</span></span>`
+  ).join('');
+}
+
 function renderSugs(elId, all, selected, key) {
   const unused = all.filter(t => !selected.includes(t));
   const el = document.getElementById(elId);
   el.innerHTML = unused.map(t =>
     `<span class="sug-tag" onclick="pickTag('${key}','${esc(t).replace(/'/g,"\\'")}')">＋ ${esc(t)}</span>`
+  ).join('');
+  el.style.display = unused.length ? '' : 'none';
+}
+
+function renderSugsSongs(elId, all, selected) {
+  const unused = sortByStrokes(all.filter(t => !selected.includes(t)));
+  const el = document.getElementById(elId);
+  el.innerHTML = unused.map(t =>
+    `<span class="sug-tag" title="右鍵從清單刪除"
+      onclick="pickTag('song','${esc(t).replace(/'/g,"\\'")}') "
+      oncontextmenu="deleteSongTag(event,'${esc(t).replace(/'/g,"\\'")}')">＋ ${esc(t)}</span>`
   ).join('');
   el.style.display = unused.length ? '' : 'none';
 }
@@ -1015,6 +1040,23 @@ function pickTag(key, tag) {
 function removeTag(key, i) {
   if (key==='skill') tmpSkills.splice(i,1);
   else               tmpSongs.splice(i,1);
+  renderTagUI();
+}
+
+// 右鍵：從已選移除（同左鍵 ✕）
+function removeSelectedSong(e, i) {
+  e.preventDefault();
+  tmpSongs.splice(i, 1);
+  renderTagUI();
+}
+
+// 右鍵：從全局歌曲清單永久刪除
+function deleteSongTag(e, tag) {
+  e.preventDefault();
+  if (!confirm(`從歌曲清單刪除「${tag}」？`)) return;
+  state.songTags = state.songTags.filter(t => t !== tag);
+  tmpSongs = tmpSongs.filter(t => t !== tag);
+  save();
   renderTagUI();
 }
 
