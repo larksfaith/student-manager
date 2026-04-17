@@ -137,6 +137,12 @@
       border-bottom: 2px solid #ddd6fe; white-space: nowrap;
     }
     th.left { text-align: left; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { background: #ede9fe; }
+    th.sortable .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 0.75rem; }
+    th.sortable.asc .sort-icon::after  { content: '▲'; opacity: 1; }
+    th.sortable.desc .sort-icon::after { content: '▼'; opacity: 1; }
+    th.sortable:not(.asc):not(.desc) .sort-icon::after { content: '⇅'; }
     td { padding: 9px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #faf5ff; }
@@ -349,14 +355,14 @@
       <table>
         <thead>
           <tr>
-            <th class="left" style="min-width:80px">姓名</th>
-            <th class="left" style="min-width:70px">暱稱</th>
+            <th class="left sortable" style="min-width:80px" onclick="sortBy('name')">姓名<span class="sort-icon"></span></th>
+            <th class="left" style="min-width:70px">LINE名稱</th>
             <th style="min-width:160px">上過的班</th>
             <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
             <th style="min-width:160px">學過的技巧</th>
             <th style="min-width:160px">學過的歌曲</th>
-            <th>購買</th>
-            <th>剩餘</th>
+            <th class="sortable" onclick="sortBy('purchased')">購買<span class="sort-icon"></span></th>
+            <th class="sortable" onclick="sortBy('remaining')">剩餘<span class="sort-icon"></span></th>
             <th style="min-width:90px">操作</th>
           </tr>
         </thead>
@@ -382,7 +388,7 @@
         <thead>
           <tr>
             <th class="left" style="min-width:80px">姓名</th>
-            <th class="left" style="min-width:70px">暱稱</th>
+            <th class="left" style="min-width:70px">LINE名稱</th>
             <th style="min-width:160px">上過的班</th>
             <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
           </tr>
@@ -407,8 +413,8 @@
         <input type="text" id="f-name" placeholder="輸入學生姓名">
       </div>
       <div class="form-group">
-        <label>暱稱</label>
-        <input type="text" id="f-nickname" placeholder="暱稱（選填）">
+        <label>LINE名稱</label>
+        <input type="text" id="f-nickname" placeholder="LINE名稱（選填）">
       </div>
     </div>
 
@@ -584,6 +590,8 @@ let tmpSkills = [];
 let tmpSongs  = [];
 let currentView = 'students';
 let currentSub  = 'first';
+let sortKey = null;   // 'name' | 'purchased' | 'remaining'
+let sortDir = 'desc'; // 'asc' | 'desc'
 
 // ════════════════════════════════════════════════
 //  Persistence (localStorage)
@@ -775,6 +783,35 @@ async function testAndSaveUrl() {
 }
 
 // ════════════════════════════════════════════════
+//  Sorting
+// ════════════════════════════════════════════════
+function sortBy(key) {
+  if (sortKey === key) {
+    sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+  } else {
+    sortKey = key;
+    sortDir = key === 'name' ? 'asc' : 'desc';
+  }
+  // Update header classes
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.classList.remove('asc','desc');
+  });
+  const active = document.querySelector(`th.sortable[onclick="sortBy('${key}')"]`);
+  if (active) active.classList.add(sortDir);
+  renderStudents();
+}
+
+function applySortStudents(list) {
+  if (!sortKey) return list;
+  return [...list].sort((a, b) => {
+    let va = sortKey === 'name' ? (a.name||'') : (a[sortKey] ?? 0);
+    let vb = sortKey === 'name' ? (b.name||'') : (b[sortKey] ?? 0);
+    if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb,'zh') : vb.localeCompare(va,'zh');
+    return sortDir === 'asc' ? va - vb : vb - va;
+  });
+}
+
+// ════════════════════════════════════════════════
 //  Views
 // ════════════════════════════════════════════════
 function showView(v) {
@@ -804,7 +841,7 @@ function renderStudents() {
     return;
   }
 
-  tbody.innerHTML = state.students.map(s => {
+  tbody.innerHTML = applySortStudents(state.students).map(s => {
     const skills = (s.skills||[]).map(sk=>`<span class="tag tag-skill">${esc(sk)}</span>`).join('') || '—';
     const songs  = (s.songs||[]).map(sg=>`<span class="tag tag-song">${esc(sg)}</span>`).join('') || '—';
     const days   = DAYS.map(d=>`<td class="day-cell">${dayCheck(s,d)}</td>`).join('');
@@ -849,7 +886,7 @@ function renderSchedule() {
   const cfg = SCHEDULE_CONFIG[currentSub];
   document.getElementById('sub-desc').textContent = cfg.desc;
 
-  const list  = state.students.filter(cfg.filter);
+  const list  = state.students.filter(s => cfg.filter(s) && (s.remaining ?? 0) > 0);
   const tbody = document.getElementById('s-body');
   const tfoot = document.getElementById('s-foot');
 
