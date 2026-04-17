@@ -350,7 +350,8 @@
         <thead>
           <tr>
             <th class="left" style="min-width:80px">姓名</th>
-            <th style="min-width:130px">上過的班</th>
+            <th class="left" style="min-width:70px">暱稱</th>
+            <th style="min-width:160px">上過的班</th>
             <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
             <th style="min-width:160px">學過的技巧</th>
             <th style="min-width:160px">學過的歌曲</th>
@@ -371,7 +372,7 @@
       <span class="toolbar-title">排課規劃</span>
     </div>
     <div class="sub-tabs">
-      <button class="sub-tab active" id="stab-first" onclick="showSubTab('first')">第一實作班</button>
+      <button class="sub-tab active" id="stab-first" onclick="showSubTab('first')">進階實作班候選</button>
       <button class="sub-tab" id="stab-big"   onclick="showSubTab('big')">實作班（大班）</button>
       <button class="sub-tab" id="stab-small" onclick="showSubTab('small')">實作班（小班）</button>
     </div>
@@ -381,7 +382,8 @@
         <thead>
           <tr>
             <th class="left" style="min-width:80px">姓名</th>
-            <th style="min-width:130px">上過的班</th>
+            <th class="left" style="min-width:70px">暱稱</th>
+            <th style="min-width:160px">上過的班</th>
             <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
           </tr>
         </thead>
@@ -399,17 +401,24 @@
     <h2 id="modal-title">新增學生</h2>
     <input type="hidden" id="edit-id">
 
-    <div class="form-group">
-      <label>學生姓名 <span style="color:var(--danger)">*</span></label>
-      <input type="text" id="f-name" placeholder="輸入學生姓名">
+    <div class="form-row">
+      <div class="form-group">
+        <label>學生姓名 <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="f-name" placeholder="輸入學生姓名">
+      </div>
+      <div class="form-group">
+        <label>暱稱</label>
+        <input type="text" id="f-nickname" placeholder="暱稱（選填）">
+      </div>
     </div>
 
     <div class="form-group">
       <label>上過的班</label>
       <div class="chip-group" id="f-classes">
+        <label class="chip" id="chip-超級早鳥班"><input type="checkbox" value="超級早鳥班">超級早鳥班</label>
         <label class="chip" id="chip-基礎班"><input type="checkbox" value="基礎班">基礎班</label>
-        <label class="chip" id="chip-第一實作班"><input type="checkbox" value="第一實作班">第一實作班</label>
         <label class="chip" id="chip-進階實作班"><input type="checkbox" value="進階實作班">進階實作班</label>
+        <label class="chip" id="chip-個人班"><input type="checkbox" value="個人班">個人班</label>
       </div>
     </div>
 
@@ -453,11 +462,11 @@
     <div class="form-row">
       <div class="form-group">
         <label>購買期數</label>
-        <input type="number" id="f-purchased" min="0" placeholder="0">
+        <input type="number" id="f-purchased" min="0" placeholder="0" oninput="autoCalcRemaining()">
       </div>
       <div class="form-group">
-        <label>剩餘期數</label>
-        <input type="number" id="f-remaining" min="0" placeholder="0">
+        <label>剩餘期數 <span id="remaining-hint" style="font-weight:400;color:var(--text-muted);font-size:0.78rem"></span></label>
+        <input type="number" id="f-remaining" min="0" placeholder="自動計算">
       </div>
     </div>
 
@@ -525,7 +534,7 @@
       <div class="code-block">姓名 ｜ 上過的班 ｜ 可上課時間 ｜ 學過的技巧 ｜ 學過的歌曲 ｜ 購買期數 ｜ 剩餘期數</div>
       <p class="setting-hint">
         多個值請用 <strong>「、」逗號或頓號</strong> 分隔，例如：<br>
-        上過的班 → <code style="background:#f5f3ff;padding:1px 5px;border-radius:3px">基礎班、第一實作班</code><br>
+        上過的班 → <code style="background:#f5f3ff;padding:1px 5px;border-radius:3px">基礎班、進階實作班</code><br>
         可上課時間 → <code style="background:#f5f3ff;padding:1px 5px;border-radius:3px">一、三、五</code>
       </p>
     </div>
@@ -544,20 +553,20 @@
 //  Constants
 // ════════════════════════════════════════════════
 const DAYS    = ['一','二','三','四','五','六','日'];
-const CLASSES = ['基礎班','第一實作班','進階實作班'];
+const CLASSES = ['超級早鳥班','基礎班','進階實作班','個人班'];
 
 const SCHEDULE_CONFIG = {
   first: {
-    desc:   '適合學生：已完成「基礎班」，尚未上「第一實作班」',
-    filter: s => has(s,'基礎班') && !has(s,'第一實作班')
+    desc:   '適合學生：已完成「基礎班」，尚未上「進階實作班」',
+    filter: s => has(s,'基礎班') && !has(s,'進階實作班')
   },
   big: {
-    desc:   '適合學生：已完成「基礎班」，尚未上「第一實作班」（大班形式安排）',
-    filter: s => has(s,'基礎班') && !has(s,'第一實作班')
+    desc:   '適合學生：已完成「基礎班」，尚未上「進階實作班」（大班形式安排）',
+    filter: s => has(s,'基礎班') && !has(s,'進階實作班')
   },
   small: {
-    desc:   '適合學生：已完成「基礎班」及「第一實作班」（進階小班）',
-    filter: s => has(s,'基礎班') && has(s,'第一實作班')
+    desc:   '適合學生：已完成「基礎班」及「進階實作班」（進階小班）',
+    filter: s => has(s,'基礎班') && has(s,'進階實作班')
   }
 };
 
@@ -605,10 +614,15 @@ function dayCheck(s, d) {
 }
 
 function classTags(s) {
-  return (s.classes||[]).map(c => {
-    const cls = c==='進階實作班' ? 'tag tag-adv' : 'tag tag-class';
-    return `<span class="${cls}">${esc(c)}</span>`;
-  }).join('') || '—';
+  const colorMap = {
+    '超級早鳥班': 'background:#fce7f3;color:#be185d',
+    '基礎班':     'background:#dcfce7;color:#166534',
+    '進階實作班': 'background:#fef3c7;color:#92400e',
+    '個人班':     'background:#e0e7ff;color:#3730a3'
+  };
+  return (s.classes||[]).map(c =>
+    `<span class="tag" style="${colorMap[c]||'background:#f3f4f6;color:#374151'}">${esc(c)}</span>`
+  ).join('') || '—';
 }
 
 // ════════════════════════════════════════════════
@@ -780,7 +794,7 @@ function renderStudents() {
   const tfoot = document.getElementById('t-foot');
 
   if (!state.students.length) {
-    tbody.innerHTML = `<tr><td colspan="14" class="empty-cell">
+    tbody.innerHTML = `<tr><td colspan="15" class="empty-cell">
       尚無學生資料<br>
       <span style="font-size:0.8rem;margin-top:6px;display:block">
         點「⬇ 從 Sheet 載入」匯入現有資料，或點「＋ 新增學生」手動新增
@@ -796,6 +810,7 @@ function renderStudents() {
     const days   = DAYS.map(d=>`<td class="day-cell">${dayCheck(s,d)}</td>`).join('');
     return `<tr>
       <td style="font-weight:700">${esc(s.name)}</td>
+      <td style="color:var(--text-muted)">${esc(s.nickname||'—')}</td>
       <td><div class="tags">${classTags(s)}</div></td>
       ${days}
       <td><div class="tags">${skills}</div></td>
@@ -813,7 +828,7 @@ function renderStudents() {
 
   const totals = DAYS.map(d => state.students.filter(s=>(s.availability||[]).includes(d)).length);
   tfoot.innerHTML = `<tr>
-    <td class="left" colspan="2" style="font-weight:800">每日可上課人數</td>
+    <td class="left" colspan="3" style="font-weight:800">每日可上課人數</td>
     ${totals.map(n=>`<td><span class="count-badge ${n?'has':'zero'}">${n}</span></td>`).join('')}
     <td colspan="4"></td>
   </tr>`;
@@ -839,7 +854,7 @@ function renderSchedule() {
   const tfoot = document.getElementById('s-foot');
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">目前沒有符合條件的學生</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-cell">目前沒有符合條件的學生</td></tr>`;
     tfoot.innerHTML = '';
     return;
   }
@@ -848,6 +863,7 @@ function renderSchedule() {
     const days = DAYS.map(d=>`<td class="day-cell">${dayCheck(s,d)}</td>`).join('');
     return `<tr>
       <td style="font-weight:700">${esc(s.name)}</td>
+      <td style="color:var(--text-muted)">${esc(s.nickname||'—')}</td>
       <td><div class="tags">${classTags(s)}</div></td>
       ${days}
     </tr>`;
@@ -855,7 +871,7 @@ function renderSchedule() {
 
   const totals = DAYS.map(d => list.filter(s=>(s.availability||[]).includes(d)).length);
   tfoot.innerHTML = `<tr>
-    <td class="left" colspan="2" style="font-weight:800">可上課人數</td>
+    <td class="left" colspan="3" style="font-weight:800">可上課人數</td>
     ${totals.map(n=>`<td><span class="count-badge ${n?'has':'zero'}">${n}</span></td>`).join('')}
   </tr>`;
 }
@@ -866,8 +882,10 @@ function renderSchedule() {
 function openModal(id) {
   document.getElementById('edit-id').value = '';
   document.getElementById('f-name').value = '';
+  document.getElementById('f-nickname').value = '';
   document.getElementById('f-purchased').value = '';
   document.getElementById('f-remaining').value = '';
+  document.getElementById('remaining-hint').textContent = '';
   CLASSES.forEach(c => setChip('chip-'+c, false));
   DAYS.forEach(d => setChip('chip-'+d, false));
   tmpSkills = [];
@@ -879,8 +897,9 @@ function openModal(id) {
     document.getElementById('modal-title').textContent = '編輯學生';
     document.getElementById('edit-id').value = id;
     document.getElementById('f-name').value = s.name;
+    document.getElementById('f-nickname').value = s.nickname || '';
     document.getElementById('f-purchased').value = s.purchased ?? '';
-    document.getElementById('f-remaining').value  = s.remaining ?? '';
+    document.getElementById('f-remaining').value = s.remaining ?? '';
     (s.classes||[]).forEach(c => setChip('chip-'+c, true));
     (s.availability||[]).forEach(d => setChip('chip-'+d, true));
     tmpSkills = [...(s.skills||[])];
@@ -895,12 +914,22 @@ function openModal(id) {
       const cb = chip.querySelector('input[type=checkbox]');
       cb.checked = !cb.checked;
       chip.classList.toggle('checked', cb.checked);
+      autoCalcRemaining();
     };
   });
 
   renderTagUI();
   document.getElementById('overlay').classList.remove('hidden');
   setTimeout(() => document.getElementById('f-name').focus(), 50);
+}
+
+function autoCalcRemaining() {
+  const purchased = parseInt(document.getElementById('f-purchased').value) || 0;
+  const attended  = document.querySelectorAll('#f-classes input:checked').length;
+  const remaining = Math.max(0, purchased - attended);
+  document.getElementById('f-remaining').value = remaining;
+  document.getElementById('remaining-hint').textContent =
+    purchased > 0 ? `（${purchased} − ${attended} 期 = ${remaining}）` : '';
 }
 
 function closeModal() { document.getElementById('overlay').classList.add('hidden'); }
@@ -975,12 +1004,13 @@ function saveStudent() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { alert('請輸入學生姓名！'); return; }
 
+  const nickname   = document.getElementById('f-nickname').value.trim();
   const classes    = [...document.querySelectorAll('#f-classes input:checked')].map(c=>c.value);
   const avail      = [...document.querySelectorAll('#f-days input:checked')].map(c=>c.value);
   const purchased  = parseInt(document.getElementById('f-purchased').value) || 0;
   const remaining  = parseInt(document.getElementById('f-remaining').value) || 0;
   const id         = document.getElementById('edit-id').value;
-  const data       = { name, classes, availability: avail, skills: tmpSkills, songs: tmpSongs, purchased, remaining };
+  const data       = { name, nickname, classes, availability: avail, skills: tmpSkills, songs: tmpSongs, purchased, remaining };
 
   if (id) {
     const idx = state.students.findIndex(s=>s.id===id);
