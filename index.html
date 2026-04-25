@@ -312,6 +312,70 @@
 
     .hidden { display: none !important; }
 
+    /* ── 日曆查空檔面板 ── */
+    .cal-panel {
+      margin: 0 24px 16px;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1.5px solid #c4b5fd;
+      overflow: hidden;
+    }
+    .cal-panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 16px;
+      background: linear-gradient(135deg, #ede9fe, #f5f3ff);
+      cursor: pointer;
+      font-weight: 700; font-size: 0.9rem;
+      color: var(--primary-dark);
+      user-select: none;
+    }
+    .cal-panel-header:hover { background: linear-gradient(135deg, #ddd6fe, #ede9fe); }
+    .cal-toggle-icon { font-size: 0.75rem; transition: transform 0.2s; }
+    .cal-toggle-icon.open { transform: rotate(180deg); }
+    .cal-panel-body { padding: 14px 16px 16px; }
+    .cal-config {
+      display: flex; align-items: center; gap: 8px;
+      flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .cal-config label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); }
+    .cal-config select, .cal-config input[type=time], .cal-config input[type=number] {
+      padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 6px;
+      font-size: 0.82rem; background: white; color: var(--text);
+    }
+    .cal-config input[type=number] { width: 52px; text-align: center; }
+    .cal-sep { color: var(--text-muted); font-size: 0.85rem; }
+    .btn-cal-fetch {
+      padding: 6px 14px; border-radius: 7px; border: none;
+      background: var(--primary); color: white;
+      font-size: 0.82rem; font-weight: 700; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-cal-fetch:hover:not(:disabled) { background: var(--primary-dark); }
+    .btn-cal-fetch:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .cal-slots { display: flex; gap: 10px; flex-wrap: wrap; }
+    .slot-card {
+      flex: 1; min-width: 130px; max-width: 200px;
+      border-radius: 10px; padding: 12px 13px;
+      border: 1.5px solid; display: flex; flex-direction: column; gap: 4px;
+    }
+    .slot-card.free  { border-color: #86efac; background: #f0fdf4; }
+    .slot-card.busy  { border-color: #fca5a5; background: #fef2f2; }
+    .slot-card.past  { border-color: var(--border); background: #f9fafb; opacity: 0.55; }
+    .slot-date  { font-weight: 800; font-size: 0.88rem; color: var(--text); }
+    .slot-time  { font-size: 0.76rem; color: var(--text-muted); }
+    .slot-status { font-size: 0.82rem; font-weight: 700; margin-top: 2px; }
+    .slot-card.free  .slot-status { color: #15803d; }
+    .slot-card.busy  .slot-status { color: var(--danger); }
+    .slot-card.past  .slot-status { color: var(--text-muted); }
+    .slot-avail { font-size: 0.76rem; color: #15803d; margin-top: 3px; font-weight: 600; }
+    .slot-names {
+      font-size: 0.72rem; color: var(--text-muted);
+      line-height: 1.45; margin-top: 1px;
+    }
+    .slot-events { font-size: 0.74rem; color: var(--danger); margin-top: 2px; }
+    .cal-empty { font-size: 0.84rem; color: var(--text-muted); padding: 8px 0; }
+
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 3px; }
@@ -391,6 +455,40 @@
     <div class="toolbar">
       <span class="toolbar-title">排課規劃</span>
     </div>
+
+    <!-- 日曆查空檔面板 -->
+    <div class="cal-panel" id="cal-panel">
+      <div class="cal-panel-header" onclick="toggleCalPanel()">
+        <span>📅 查 Google 日曆空檔</span>
+        <span class="cal-toggle-icon open" id="cal-toggle-icon">▼</span>
+      </div>
+      <div class="cal-panel-body" id="cal-panel-body">
+        <div class="cal-config">
+          <label>每週</label>
+          <select id="cal-dow">
+            <option value="1">週一</option>
+            <option value="2" selected>週二</option>
+            <option value="3">週三</option>
+            <option value="4">週四</option>
+            <option value="5">週五</option>
+            <option value="6">週六</option>
+            <option value="0">週日</option>
+          </select>
+          <label>時段</label>
+          <input type="time" id="cal-start" value="19:00">
+          <span class="cal-sep">～</span>
+          <input type="time" id="cal-end" value="21:00">
+          <label>查</label>
+          <input type="number" id="cal-weeks" value="6" min="1" max="12">
+          <span class="cal-sep">週</span>
+          <button class="btn-cal-fetch" id="cal-fetch-btn" onclick="fetchCalSlots()">查詢空檔</button>
+        </div>
+        <div class="cal-slots" id="cal-slots">
+          <span class="cal-empty">按「查詢空檔」後，這裡會顯示未來 6 週的行程</span>
+        </div>
+      </div>
+    </div>
+
     <div class="sub-tabs">
       <button class="sub-tab active" id="stab-first" onclick="showSubTab('first')">進階實作班候選</button>
       <button class="sub-tab" id="stab-big"   onclick="showSubTab('big')">實作班（大班）</button>
@@ -1097,6 +1195,103 @@ function renderSchedule() {
     <td class="left" colspan="3" style="font-weight:800">可上課人數</td>
     ${totals.map(n=>`<td><span class="count-badge ${n?'has':'zero'}">${n}</span></td>`).join('')}
   </tr>`;
+}
+
+// ════════════════════════════════════════════════
+//  日曆查空檔
+// ════════════════════════════════════════════════
+let calPanelOpen = true;
+
+function toggleCalPanel() {
+  calPanelOpen = !calPanelOpen;
+  document.getElementById('cal-panel-body').style.display = calPanelOpen ? '' : 'none';
+  document.getElementById('cal-toggle-icon').classList.toggle('open', calPanelOpen);
+}
+
+async function fetchCalSlots() {
+  if (!state.scriptUrl) {
+    showToast('⚠️ 請先在設定中連結 Google Sheet', 'error');
+    return;
+  }
+  const btn = document.getElementById('cal-fetch-btn');
+  btn.disabled = true;
+  btn.textContent = '查詢中…';
+  document.getElementById('cal-slots').innerHTML =
+    '<span class="cal-empty">⏳ 正在查詢 Google 日曆，請稍候…</span>';
+
+  const config = {
+    dayOfWeek: parseInt(document.getElementById('cal-dow').value),
+    timeStart:  document.getElementById('cal-start').value,
+    timeEnd:    document.getElementById('cal-end').value,
+    weeks:      parseInt(document.getElementById('cal-weeks').value) || 6
+  };
+
+  try {
+    const res  = await fetch(state.scriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'getFreeSlots', config })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || '查詢失敗');
+    renderCalSlots(data.slots, config);
+  } catch(e) {
+    document.getElementById('cal-slots').innerHTML =
+      `<span class="cal-empty" style="color:var(--danger)">❌ ${esc(e.message)}</span>`;
+    showToast('日曆查詢失敗：' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '查詢空檔';
+  }
+}
+
+function renderCalSlots(slots, config) {
+  const el = document.getElementById('cal-slots');
+  if (!slots || !slots.length) {
+    el.innerHTML = '<span class="cal-empty">沒有找到任何時段</span>';
+    return;
+  }
+
+  // 取得目前 sub-tab 的學生（篩完、有剩餘期數的）
+  const cfg      = SCHEDULE_CONFIG[currentSub];
+  const students = state.students.filter(s => cfg.filter(s) && (s.remaining ?? 0) > 0);
+
+  // 把 dayOfWeek 數字轉成中文 key（availability 用的是 '一'~'日'）
+  const DOW_TO_CN = { 0:'日', 1:'一', 2:'二', 3:'三', 4:'四', 5:'五', 6:'六' };
+  const dayKey    = DOW_TO_CN[config.dayOfWeek] ?? '';
+
+  el.innerHTML = slots.map(slot => {
+    if (slot.isPast) {
+      return `<div class="slot-card past">
+        <div class="slot-date">${esc(slot.label)}</div>
+        <div class="slot-time">${config.timeStart}–${config.timeEnd}</div>
+        <div class="slot-status">已過去</div>
+      </div>`;
+    }
+
+    if (slot.isFree) {
+      const avail = dayKey ? students.filter(s => (s.availability||[]).includes(dayKey)) : [];
+      return `<div class="slot-card free">
+        <div class="slot-date">${esc(slot.label)}</div>
+        <div class="slot-time">${config.timeStart}–${config.timeEnd}</div>
+        <div class="slot-status">🟢 空檔</div>
+        ${avail.length
+          ? `<div class="slot-avail">👥 ${avail.length} 位學生可上課</div>
+             <div class="slot-names">${avail.map(s => esc(s.name)).join('、')}</div>`
+          : `<div class="slot-avail" style="color:var(--text-muted)">目前無符合學生</div>`
+        }
+      </div>`;
+    }
+
+    return `<div class="slot-card busy">
+      <div class="slot-date">${esc(slot.label)}</div>
+      <div class="slot-time">${config.timeStart}–${config.timeEnd}</div>
+      <div class="slot-status">🔴 有行程</div>
+      ${slot.busyEvents.length
+        ? `<div class="slot-events">${slot.busyEvents.map(e => esc(e)).join('<br>')}</div>`
+        : ''}
+    </div>`;
+  }).join('');
 }
 
 // ════════════════════════════════════════════════
