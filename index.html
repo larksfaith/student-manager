@@ -706,28 +706,94 @@ function setSyncStatus(status, msg) {
 }
 
 function updateSyncBadge() {
-  if (state.scriptUrl) setSyncStatus('', '已連線 Sheet');
+  if (state.scriptUrl) setSyncStatus('', '已連線');
   else                 setSyncStatus('off', '未連線');
 }
 
+function setLastSyncTime() {
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2,'0');
+  const mm  = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('sync-text').textContent = `上次同步 ${hh}:${mm}`;
+}
+
 // ════════════════════════════════════════════════
-//  Google Sheets — Pull
+//  智慧合併：只加新學生，已有的保留手動資料
+// ════════════════════════════════════════════════
+function smartMerge(sheetStudents) {
+  // 用姓名當 key
+  const nameMap = new Map(state.students.map(s => [s.name.trim(), s]));
+  let added = 0, updated = 0;
+
+  for (const ss of sheetStudents) {
+    const name  = (ss.name||'').trim();
+    if (!name) continue;
+    const local = nameMap.get(name);
+
+    if (!local) {
+      // ── 新學生：完整加入 ──
+      state.students.push({ ...ss, id: uid() });
+      nameMap.set(name, state.students[state.students.length - 1]);
+      added++;
+    } else {
+      // ── 已有學生：只更新購買期數（往上加），其餘全部保留手動資料 ──
+      const oldPurchased = local.purchased || 0;
+      local.purchased    = Math.max(oldPurchased, ss.purchased || 0);
+      // 剩餘 = 購買 - 已上班數（依目前勾選的班別重新計算）
+      local.remaining    = Math.max(0, local.purchased - (local.classes||[]).length);
+      if (local.purchased !== oldPurchased) updated++;
+    }
+  }
+  return { added, updated };
+}
+
+// ════════════════════════════════════════════════
+//  背景靜默同步（不打擾使用者）
+// ════════════════════════════════════════════════
+let autoSyncTimer = null;
+const AUTO_SYNC_MS = 5 * 60 * 1000; // 5 分鐘
+
+function startAutoSync() {
+  stopAutoSync();
+  if (!state.scriptUrl) return;
+  autoSyncTimer = setInterval(silentSync, AUTO_SYNC_MS);
+}
+
+function stopAutoSync() {
+  if (autoSyncTimer) { clearInterval(autoSyncTimer); autoSyncTimer = null; }
+}
+
+async function silentSync() {
+  if (!state.scriptUrl) return;
+  try {
+    const data = await fetchScript(state.scriptUrl);
+    if (!data.success) return;
+
+    // 合併標籤庫
+    state.skillTags = [...new Set([...state.skillTags, ...(data.skillTags||[])])];
+    state.songTags  = [...new Set([...state.songTags,  ...(data.songTags||[])])];
+
+    const { added } = smartMerge(data.students || []);
+    save();
+    setLastSyncTime();
+
+    if (added > 0) {
+      renderStudents();
+      if (currentView==='schedule') renderSchedule();
+      showToast(`🆕 自動同步：新增 ${added} 位學生`, 'success', 4000);
+    }
+  } catch(e) {
+    // 靜默失敗，不打擾使用者
+  }
+}
+
+// ════════════════════════════════════════════════
+//  手動從 Sheet 載入（合併模式）
 // ════════════════════════════════════════════════
 async function pullFromSheets() {
   if (!state.scriptUrl) { openSettings(); return; }
 
-  // ── 有現有資料時先確認 ──────────────────────────────
-  if (state.students.length > 0) {
-    if (!confirm(
-      `⚠️ 目前已有 ${state.students.length} 位學生的資料。\n\n` +
-      `從 Sheet 載入會把可上課時間、技巧、歌曲等\n手動填寫的欄位都覆蓋掉。\n\n` +
-      `確定要繼續嗎？（系統會先自動備份目前資料）`
-    )) return;
-  }
-
-  // ── 先備份目前資料 ───────────────────────────────────
   saveBackup();
-
   setSyncStatus('loading','載入中…');
   const btn = document.getElementById('btn-pull');
   btn.disabled = true;
@@ -736,18 +802,23 @@ async function pullFromSheets() {
     const data = await fetchScript(state.scriptUrl);
     if (!data.success) throw new Error(data.error || '讀取失敗');
 
-    const sheetSkills = data.skillTags || [];
-    const sheetSongs  = data.songTags  || [];
-    state.skillTags = [...new Set([...state.skillTags, ...sheetSkills])];
-    state.songTags  = [...new Set([...state.songTags,  ...sheetSongs])];
-    state.students  = (data.students || []).map(s => ({ ...s, id: uid() }));
+    state.skillTags = [...new Set([...state.skillTags, ...(data.skillTags||[])])];
+    state.songTags  = [...new Set([...state.songTags,  ...(data.songTags||[])])];
+
+    const { added, updated } = smartMerge(data.students || []);
 
     save();
     renderStudents();
     if (currentView==='schedule') renderSchedule();
     updateBackupBtn();
-    setSyncStatus('','已連線 Sheet');
-    showToast(`✅ 已載入 ${state.students.length} 位學生（備份已保存，可按「復原備份」還原）`, 'success', 5000);
+    setLastSyncTime();
+    setSyncStatus('', '已連線');
+    showToast(
+      added + updated === 0
+        ? '✅ 資料已是最新，無變動'
+        : `✅ 同步完成：新增 ${added} 人，更新 ${updated} 人`,
+      'success', 4000
+    );
   } catch(e) {
     setSyncStatus('off','連線失敗');
     showToast('❌ 載入失敗：' + e.message, 'error');
@@ -1291,6 +1362,7 @@ load();
 updateSyncBadge();
 updateBackupBtn();
 renderStudents();
+startAutoSync();
 </script>
 </body>
 </html>
