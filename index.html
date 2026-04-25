@@ -246,6 +246,12 @@
       transition: all 0.15s;
     }
     .sug-tag:hover { border-style: solid; background: #ede9fe; }
+    .tag-rename-input {
+      padding: 2px 8px; border-radius: 9999px; font-size: 0.78rem;
+      border: 1.5px solid var(--primary); outline: none;
+      background: #ede9fe; color: var(--primary-dark); font-family: inherit;
+      width: 100px;
+    }
     .custom-add { display: flex; gap: 8px; }
     .custom-add input {
       flex: 1; padding: 5px 10px; border: 1.5px solid var(--border);
@@ -1067,8 +1073,9 @@ function renderTagUI() {
     // 建議清單（筆畫排序 + 右鍵永久刪除）
     const unused = sortByStrokes(state[cfg.stateKey].filter(t => !tmp.includes(t)));
     elSug.innerHTML = unused.map(t =>
-      `<span class="sug-tag" title="右鍵從清單刪除"
+      `<span class="sug-tag" title="點擊選用 ／ 雙擊改名 ／ 右鍵刪除"
         onclick="pickTag('${k}','${esc(t).replace(/'/g,"\\'")}') "
+        ondblclick="startRenameTag(event,'${k}','${esc(t).replace(/'/g,"\\'")}') "
         oncontextmenu="deleteTagFromLib(event,'${k}','${esc(t).replace(/'/g,"\\'")}')">＋ ${esc(t)}</span>`
     ).join('');
     elSug.style.display = unused.length ? '' : 'none';
@@ -1099,6 +1106,55 @@ function deleteTagFromLib(e, k, tag) {
   if (!confirm(`從${TAG_CFG[k].label}清單刪除「${tag}」？`)) return;
   state[TAG_CFG[k].stateKey] = state[TAG_CFG[k].stateKey].filter(t => t !== tag);
   setTmp(k, getTmp(k).filter(t => t !== tag));
+  save();
+  renderTagUI();
+}
+
+// ── 雙擊改名 ─────────────────────────────────────────────
+function startRenameTag(e, k, oldTag) {
+  e.preventDefault();
+  e.stopPropagation();
+  const span = e.currentTarget;
+  const inp  = document.createElement('input');
+  inp.className   = 'tag-rename-input';
+  inp.value       = oldTag;
+  inp.style.width = Math.max(60, oldTag.length * 14) + 'px';
+  span.replaceWith(inp);
+  inp.focus();
+  inp.select();
+
+  const commit = () => {
+    const newTag = inp.value.trim();
+    if (newTag && newTag !== oldTag) confirmRenameTag(k, oldTag, newTag);
+    else renderTagUI(); // 取消 → 還原
+  };
+  inp.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter')  { ev.preventDefault(); commit(); }
+    if (ev.key === 'Escape') renderTagUI();
+  });
+  inp.addEventListener('blur', commit);
+}
+
+function confirmRenameTag(k, oldTag, newTag) {
+  const stateKey = TAG_CFG[k].stateKey;
+
+  // 1. 更新全局清單
+  const libIdx = state[stateKey].indexOf(oldTag);
+  if (libIdx >= 0) state[stateKey][libIdx] = newTag;
+
+  // 2. 更新所有學生資料
+  const field = k === 'skill' ? 'skills' : 'songs';
+  state.students.forEach(s => {
+    const arr = s[field] || [];
+    const i   = arr.indexOf(oldTag);
+    if (i >= 0) arr[i] = newTag;
+  });
+
+  // 3. 更新目前編輯中的暫存
+  const tmp = getTmp(k);
+  const ti  = tmp.indexOf(oldTag);
+  if (ti >= 0) tmp[ti] = newTag;
+
   save();
   renderTagUI();
 }
