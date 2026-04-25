@@ -325,6 +325,7 @@
     .status-badge.s-waiting  { background:#fef9c3; color:#854d0e; border-color:#fde047; }
     .status-badge.s-active   { background:#dcfce7; color:#166534; border-color:#86efac; }
     .status-badge.s-next     { background:#ede9fe; color:#5b21b6; border-color:#c4b5fd; }
+    .status-badge.s-rest     { background:#f3f4f6; color:#6b7280; border-color:#d1d5db; }
 
     /* 狀態選擇 chips（radio 單選） */
     .status-chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -344,6 +345,7 @@
     .status-chip.checked.s-waiting { background:#fef9c3; color:#854d0e; border-color:#fde047; }
     .status-chip.checked.s-active  { background:#dcfce7; color:#166534; border-color:#86efac; }
     .status-chip.checked.s-next    { background:#ede9fe; color:#5b21b6; border-color:#c4b5fd; }
+    .status-chip.checked.s-rest    { background:#f3f4f6; color:#6b7280; border-color:#d1d5db; }
 
     /* ── 日曆查空檔面板 ── */
     .cal-panel {
@@ -579,9 +581,10 @@
     <div class="form-group">
       <label>狀態</label>
       <div class="status-chip-group" id="f-status">
-        <span class="status-chip s-waiting" data-val="等待開課中"  onclick="selectStatus(this)">等待開課中</span>
-        <span class="status-chip s-active"  data-val="上課中"      onclick="selectStatus(this)">上課中</span>
+        <span class="status-chip s-waiting" data-val="等待開課中"   onclick="selectStatus(this)">等待開課中</span>
+        <span class="status-chip s-active"  data-val="上課中"       onclick="selectStatus(this)">上課中</span>
         <span class="status-chip s-next"    data-val="等待下一期時間" onclick="selectStatus(this)">等待下一期時間</span>
+        <span class="status-chip s-rest"    data-val="休息中"        onclick="selectStatus(this)">休息中</span>
       </div>
     </div>
 
@@ -827,7 +830,8 @@ function dayCheck(s, d) {
 const STATUS_CLASS = {
   '等待開課中':    's-waiting',
   '上課中':        's-active',
-  '等待下一期時間': 's-next'
+  '等待下一期時間': 's-next',
+  '休息中':        's-rest'
 };
 
 function statusBadge(s) {
