@@ -312,6 +312,39 @@
 
     .hidden { display: none !important; }
 
+    /* ── 狀態 badge ── */
+    .status-badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 9999px;
+      font-size: 0.73rem;
+      font-weight: 700;
+      white-space: nowrap;
+      border: 1.5px solid;
+    }
+    .status-badge.s-waiting  { background:#fef9c3; color:#854d0e; border-color:#fde047; }
+    .status-badge.s-active   { background:#dcfce7; color:#166534; border-color:#86efac; }
+    .status-badge.s-next     { background:#ede9fe; color:#5b21b6; border-color:#c4b5fd; }
+
+    /* 狀態選擇 chips（radio 單選） */
+    .status-chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .status-chip {
+      padding: 6px 14px;
+      border-radius: 9999px;
+      border: 1.5px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .status-chip:hover { border-color: var(--primary-light); color: var(--primary); }
+    .status-chip.checked.s-waiting { background:#fef9c3; color:#854d0e; border-color:#fde047; }
+    .status-chip.checked.s-active  { background:#dcfce7; color:#166534; border-color:#86efac; }
+    .status-chip.checked.s-next    { background:#ede9fe; color:#5b21b6; border-color:#c4b5fd; }
+
     /* ── 日曆查空檔面板 ── */
     .cal-panel {
       margin: 0 24px 16px;
@@ -436,6 +469,7 @@
             <th class="left sortable" style="min-width:80px" onclick="sortBy('name')">姓名<span class="sort-icon"></span></th>
             <th class="left" style="min-width:70px">LINE名稱</th>
             <th style="min-width:160px">上過的班</th>
+            <th style="min-width:110px">狀態</th>
             <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
             <th style="min-width:160px">學過的技巧</th>
             <th style="min-width:160px">學過的歌曲</th>
@@ -502,6 +536,7 @@
             <th class="left" style="min-width:80px">姓名</th>
             <th class="left" style="min-width:70px">LINE名稱</th>
             <th style="min-width:160px">上過的班</th>
+            <th style="min-width:110px">狀態</th>
             <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th>
           </tr>
         </thead>
@@ -538,6 +573,15 @@
         <label class="chip" id="chip-進階實作班"><input type="checkbox" value="進階實作班">進階實作班</label>
         <label class="chip" id="chip-個人班"><input type="checkbox" value="個人班">個人班</label>
         <label class="chip" id="chip-超級早鳥班"><input type="checkbox" value="超級早鳥班">超級早鳥班</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>狀態</label>
+      <div class="status-chip-group" id="f-status">
+        <span class="status-chip s-waiting" data-val="等待開課中"  onclick="selectStatus(this)">等待開課中</span>
+        <span class="status-chip s-active"  data-val="上課中"      onclick="selectStatus(this)">上課中</span>
+        <span class="status-chip s-next"    data-val="等待下一期時間" onclick="selectStatus(this)">等待下一期時間</span>
       </div>
     </div>
 
@@ -778,6 +822,27 @@ function dayCheck(s, d) {
   return (s.availability||[]).includes(d)
     ? '<span style="color:#059669;font-size:1.1em">✓</span>'
     : '<span style="color:#d1d5db">·</span>';
+}
+
+const STATUS_CLASS = {
+  '等待開課中':    's-waiting',
+  '上課中':        's-active',
+  '等待下一期時間': 's-next'
+};
+
+function statusBadge(s) {
+  const st = (s.status || '').trim();
+  if (!st) return '<span style="color:var(--text-muted);font-size:0.8rem">—</span>';
+  const cls = STATUS_CLASS[st] || '';
+  return `<span class="status-badge ${cls}">${esc(st)}</span>`;
+}
+
+function selectStatus(el) {
+  // 單選：清掉所有 checked，再選這一個（再點一次取消）
+  const group = document.querySelectorAll('#f-status .status-chip');
+  const wasChecked = el.classList.contains('checked');
+  group.forEach(c => c.classList.remove('checked'));
+  if (!wasChecked) el.classList.add('checked');
 }
 
 function classTags(s) {
@@ -1091,6 +1156,7 @@ function renderStudents() {
       <td>${esc(s.name)}</td>
       <td style="font-weight:700">${esc(s.nickname||'—')}</td>
       <td><div class="tags">${classTags(s)}</div></td>
+      <td style="text-align:center">${statusBadge(s)}</td>
       ${days}
       <td><div class="tags">${skills}</div></td>
       <td><div class="tags">${songs}</div></td>
@@ -1110,7 +1176,7 @@ function renderStudents() {
   const totals = DAYS.map(d => state.students.filter(s=>(s.availability||[]).includes(d)).length);
   tfoot.innerHTML = `<tr>
     <td></td>
-    <td class="left" colspan="3" style="font-weight:800">每日可上課人數</td>
+    <td class="left" colspan="4" style="font-weight:800">每日可上課人數</td>
     ${totals.map(n=>`<td><span class="count-badge ${n?'has':'zero'}">${n}</span></td>`).join('')}
     <td colspan="4"></td>
   </tr>`;
@@ -1175,7 +1241,7 @@ function renderSchedule() {
   const tfoot = document.getElementById('s-foot');
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty-cell">目前沒有符合條件的學生</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="empty-cell">目前沒有符合條件的學生</td></tr>`;
     tfoot.innerHTML = '';
     return;
   }
@@ -1186,13 +1252,14 @@ function renderSchedule() {
       <td style="font-weight:700">${esc(s.name)}</td>
       <td style="color:var(--text-muted)">${esc(s.nickname||'—')}</td>
       <td><div class="tags">${classTags(s)}</div></td>
+      <td style="text-align:center">${statusBadge(s)}</td>
       ${days}
     </tr>`;
   }).join('');
 
   const totals = DAYS.map(d => list.filter(s=>(s.availability||[]).includes(d)).length);
   tfoot.innerHTML = `<tr>
-    <td class="left" colspan="3" style="font-weight:800">可上課人數</td>
+    <td class="left" colspan="4" style="font-weight:800">可上課人數</td>
     ${totals.map(n=>`<td><span class="count-badge ${n?'has':'zero'}">${n}</span></td>`).join('')}
   </tr>`;
 }
@@ -1306,6 +1373,7 @@ function openModal(id) {
   document.getElementById('remaining-hint').textContent = '';
   CLASSES.forEach(c => setChip('chip-'+c, false));
   DAYS.forEach(d => setChip('chip-'+d, false));
+  document.querySelectorAll('#f-status .status-chip').forEach(c => c.classList.remove('checked'));
   tmpSkills = [];
   tmpSongs  = [];
 
@@ -1320,6 +1388,10 @@ function openModal(id) {
     document.getElementById('f-remaining').value = s.remaining ?? '';
     (s.classes||[]).forEach(c => setChip('chip-'+c, true));
     (s.availability||[]).forEach(d => setChip('chip-'+d, true));
+    if (s.status) {
+      const chip = document.querySelector(`#f-status [data-val="${s.status}"]`);
+      if (chip) chip.classList.add('checked');
+    }
     tmpSkills = [...(s.skills||[])];
     tmpSongs  = [...(s.songs||[])];
   } else {
@@ -1509,8 +1581,10 @@ function saveStudent() {
   const avail      = [...document.querySelectorAll('#f-days input:checked')].map(c=>c.value);
   const purchased  = parseInt(document.getElementById('f-purchased').value) || 0;
   const remaining  = parseInt(document.getElementById('f-remaining').value) || 0;
+  const statusEl   = document.querySelector('#f-status .status-chip.checked');
+  const status     = statusEl ? statusEl.dataset.val : '';
   const id         = document.getElementById('edit-id').value;
-  const data       = { name, nickname, classes, availability: avail, skills: tmpSkills, songs: tmpSongs, purchased, remaining };
+  const data       = { name, nickname, classes, availability: avail, skills: tmpSkills, songs: tmpSongs, purchased, remaining, status };
 
   if (id) {
     const idx = state.students.findIndex(s=>s.id===id);
