@@ -352,6 +352,9 @@
     <div class="toolbar">
       <span class="toolbar-title">所有學生</span>
       <div class="toolbar-right">
+        <button class="btn hidden" id="btn-restore" onclick="restoreBackup()"
+          style="background:#fef3c7;color:#92400e;border:1.5px solid #fbbf24"
+          title="復原備份">↩ 復原備份</button>
         <button class="btn btn-secondary" id="btn-pull" onclick="pullFromSheets()" title="從 Google Sheet 載入最新資料">
           ⬇ 從 Sheet 載入
         </button>
@@ -608,12 +611,58 @@ let sortDir = 'desc'; // 'asc' | 'desc'
 // ════════════════════════════════════════════════
 //  Persistence (localStorage)
 // ════════════════════════════════════════════════
-function save() { localStorage.setItem('voiceStudio_v2', JSON.stringify(state)); }
+const STORE_KEY   = 'voiceStudio_v2';
+const BACKUP_KEY  = 'voiceStudio_v2_backup';
+
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
 function load() {
   try {
-    const d = localStorage.getItem('voiceStudio_v2');
+    const d = localStorage.getItem(STORE_KEY);
     if (d) state = { ...state, ...JSON.parse(d) };
   } catch(e) {}
+}
+
+// 拉取前先備份，復原時還原
+function saveBackup() {
+  localStorage.setItem(BACKUP_KEY, localStorage.getItem(STORE_KEY) || '{}');
+}
+
+function hasBackup() {
+  try { const b = JSON.parse(localStorage.getItem(BACKUP_KEY)||'{}'); return (b.students||[]).length > 0; }
+  catch(e) { return false; }
+}
+
+function restoreBackup() {
+  const raw = localStorage.getItem(BACKUP_KEY);
+  if (!raw) { showToast('找不到備份資料', 'error'); return; }
+  try {
+    const backup = JSON.parse(raw);
+    if (!(backup.students||[]).length) { showToast('備份資料是空的', 'error'); return; }
+    if (!confirm(`確定要復原備份？（${backup.students.length} 位學生）\n目前資料將被取代。`)) return;
+    state = { ...state, ...backup };
+    save();
+    renderStudents();
+    if (currentView==='schedule') renderSchedule();
+    updateBackupBtn();
+    showToast(`✅ 已復原 ${state.students.length} 位學生`, 'success');
+  } catch(e) {
+    showToast('復原失敗：' + e.message, 'error');
+  }
+}
+
+function updateBackupBtn() {
+  const btn = document.getElementById('btn-restore');
+  if (!btn) return;
+  if (hasBackup()) {
+    try {
+      const b = JSON.parse(localStorage.getItem(BACKUP_KEY)||'{}');
+      btn.classList.remove('hidden');
+      btn.title = `復原備份（${(b.students||[]).length} 位學生）`;
+    } catch(e) {}
+  } else {
+    btn.classList.add('hidden');
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -667,6 +716,18 @@ function updateSyncBadge() {
 async function pullFromSheets() {
   if (!state.scriptUrl) { openSettings(); return; }
 
+  // ── 有現有資料時先確認 ──────────────────────────────
+  if (state.students.length > 0) {
+    if (!confirm(
+      `⚠️ 目前已有 ${state.students.length} 位學生的資料。\n\n` +
+      `從 Sheet 載入會把可上課時間、技巧、歌曲等\n手動填寫的欄位都覆蓋掉。\n\n` +
+      `確定要繼續嗎？（系統會先自動備份目前資料）`
+    )) return;
+  }
+
+  // ── 先備份目前資料 ───────────────────────────────────
+  saveBackup();
+
   setSyncStatus('loading','載入中…');
   const btn = document.getElementById('btn-pull');
   btn.disabled = true;
@@ -675,20 +736,18 @@ async function pullFromSheets() {
     const data = await fetchScript(state.scriptUrl);
     if (!data.success) throw new Error(data.error || '讀取失敗');
 
-    // Merge: prefer Sheet data, keep local skillTags/songTags merged
     const sheetSkills = data.skillTags || [];
     const sheetSongs  = data.songTags  || [];
     state.skillTags = [...new Set([...state.skillTags, ...sheetSkills])];
     state.songTags  = [...new Set([...state.songTags,  ...sheetSongs])];
-
-    // Assign fresh IDs so they don't conflict
-    state.students = (data.students || []).map(s => ({ ...s, id: uid() }));
+    state.students  = (data.students || []).map(s => ({ ...s, id: uid() }));
 
     save();
     renderStudents();
     if (currentView==='schedule') renderSchedule();
+    updateBackupBtn();
     setSyncStatus('','已連線 Sheet');
-    showToast(`✅ 已載入 ${state.students.length} 位學生`, 'success');
+    showToast(`✅ 已載入 ${state.students.length} 位學生（備份已保存，可按「復原備份」還原）`, 'success', 5000);
   } catch(e) {
     setSyncStatus('off','連線失敗');
     showToast('❌ 載入失敗：' + e.message, 'error');
@@ -1214,7 +1273,7 @@ function delStudent(id) {
 //  Toast
 // ════════════════════════════════════════════════
 let toastTimer;
-function showToast(msg, type='info') {
+function showToast(msg, type='info', ms=3000) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = `toast ${type}`;
@@ -1222,7 +1281,7 @@ function showToast(msg, type='info') {
   toastTimer = setTimeout(() => {
     el.classList.add('hiding');
     setTimeout(() => el.classList.add('hidden'), 300);
-  }, 3000);
+  }, ms);
 }
 
 // ════════════════════════════════════════════════
@@ -1230,6 +1289,7 @@ function showToast(msg, type='info') {
 // ════════════════════════════════════════════════
 load();
 updateSyncBadge();
+updateBackupBtn();
 renderStudents();
 </script>
 </body>
