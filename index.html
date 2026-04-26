@@ -246,6 +246,35 @@
       transition: all 0.15s;
     }
     .sug-tag:hover { border-style: solid; background: #ede9fe; }
+    /* ── 標籤右鍵選單 ── */
+    .tag-ctx-menu {
+      position: fixed;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+      z-index: 2000;
+      min-width: 130px;
+      overflow: hidden;
+      animation: menuPop 0.1s ease;
+    }
+    @keyframes menuPop {
+      from { opacity: 0; transform: scale(0.93); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .tag-ctx-menu button {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; padding: 9px 14px;
+      background: none; border: none; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; color: var(--text);
+      text-align: left;
+      transition: background 0.1s;
+    }
+    .tag-ctx-menu button:hover { background: var(--bg); }
+    .tag-ctx-menu button.danger { color: var(--danger); }
+    .tag-ctx-menu button.danger:hover { background: #fef2f2; }
+    .tag-ctx-menu hr { margin: 3px 0; border: none; border-top: 1px solid var(--border); }
+
     .tag-rename-input {
       padding: 2px 8px; border-radius: 9999px; font-size: 0.78rem;
       border: 1.5px solid var(--primary); outline: none;
@@ -713,6 +742,13 @@
 
 <!-- ══ Toast ══ -->
 <div class="toast hidden" id="toast"></div>
+
+<!-- ══ Tag Context Menu ══ -->
+<div class="tag-ctx-menu hidden" id="tag-ctx-menu">
+  <button onclick="ctxRename()">✏️ 重新命名</button>
+  <hr>
+  <button class="danger" onclick="ctxDelete()">🗑 刪除</button>
+</div>
 
 <script>
 // ════════════════════════════════════════════════
@@ -1474,10 +1510,9 @@ function renderTagUI() {
     // 建議清單（筆畫排序 + 右鍵永久刪除）
     const unused = sortByStrokes(state[cfg.stateKey].filter(t => !tmp.includes(t)));
     elSug.innerHTML = unused.map(t =>
-      `<span class="sug-tag" title="點擊選用 ／ 雙擊改名 ／ 右鍵刪除"
+      `<span class="sug-tag" title="點擊選用 ／ 右鍵重新命名或刪除"
         onclick="pickTag('${k}','${esc(t).replace(/'/g,"\\'")}') "
-        ondblclick="startRenameTag(event,'${k}','${esc(t).replace(/'/g,"\\'")}') "
-        oncontextmenu="deleteTagFromLib(event,'${k}','${esc(t).replace(/'/g,"\\'")}')">＋ ${esc(t)}</span>`
+        oncontextmenu="showTagCtxMenu(event,'${k}','${esc(t).replace(/'/g,"\\'")}')">＋ ${esc(t)}</span>`
     ).join('');
     elSug.style.display = unused.length ? '' : 'none';
   });
@@ -1501,22 +1536,39 @@ function removeSelectedTag(e, k, i) {
   renderTagUI();
 }
 
-// 右鍵：從全局清單永久刪除
-function deleteTagFromLib(e, k, tag) {
-  e.preventDefault();
-  if (!confirm(`從${TAG_CFG[k].label}清單刪除「${tag}」？`)) return;
-  state[TAG_CFG[k].stateKey] = state[TAG_CFG[k].stateKey].filter(t => t !== tag);
-  setTmp(k, getTmp(k).filter(t => t !== tag));
-  save();
-  renderTagUI();
-}
+// ── 右鍵選單 ─────────────────────────────────────────────
+let _ctxK   = null;   // 'skill' | 'song'
+let _ctxTag = null;   // 標籤文字
+let _ctxSpan = null;  // span DOM 元素
 
-// ── 雙擊改名 ─────────────────────────────────────────────
-function startRenameTag(e, k, oldTag) {
+function showTagCtxMenu(e, k, tag) {
   e.preventDefault();
   e.stopPropagation();
-  const span = e.currentTarget;
-  const inp  = document.createElement('input');
+  _ctxK    = k;
+  _ctxTag  = tag;
+  _ctxSpan = e.currentTarget;
+
+  const menu = document.getElementById('tag-ctx-menu');
+  menu.classList.remove('hidden');
+
+  // 定位在滑鼠附近，避免超出視窗
+  const x = Math.min(e.clientX, window.innerWidth  - 150);
+  const y = Math.min(e.clientY, window.innerHeight - 90);
+  menu.style.left = x + 'px';
+  menu.style.top  = y + 'px';
+}
+
+function closeTagCtxMenu() {
+  document.getElementById('tag-ctx-menu').classList.add('hidden');
+  _ctxK = _ctxTag = _ctxSpan = null;
+}
+
+function ctxRename() {
+  const k = _ctxK, oldTag = _ctxTag, span = _ctxSpan;
+  closeTagCtxMenu();
+  if (!span || !k || !oldTag) return;
+
+  const inp = document.createElement('input');
   inp.className   = 'tag-rename-input';
   inp.value       = oldTag;
   inp.style.width = Math.max(60, oldTag.length * 14) + 'px';
@@ -1527,7 +1579,7 @@ function startRenameTag(e, k, oldTag) {
   const commit = () => {
     const newTag = inp.value.trim();
     if (newTag && newTag !== oldTag) confirmRenameTag(k, oldTag, newTag);
-    else renderTagUI(); // 取消 → 還原
+    else renderTagUI();
   };
   inp.addEventListener('keydown', ev => {
     if (ev.key === 'Enter')  { ev.preventDefault(); commit(); }
@@ -1535,6 +1587,28 @@ function startRenameTag(e, k, oldTag) {
   });
   inp.addEventListener('blur', commit);
 }
+
+function ctxDelete() {
+  const k = _ctxK, tag = _ctxTag;
+  closeTagCtxMenu();
+  if (!k || !tag) return;
+  if (!confirm(`從${TAG_CFG[k].label}清單刪除「${tag}」？`)) return;
+  state[TAG_CFG[k].stateKey] = state[TAG_CFG[k].stateKey].filter(t => t !== tag);
+  setTmp(k, getTmp(k).filter(t => t !== tag));
+  save();
+  renderTagUI();
+}
+
+// 點擊選單外側關閉
+document.addEventListener('click', e => {
+  const menu = document.getElementById('tag-ctx-menu');
+  if (!menu.classList.contains('hidden') && !menu.contains(e.target)) {
+    closeTagCtxMenu();
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeTagCtxMenu();
+});
 
 function confirmRenameTag(k, oldTag, newTag) {
   const stateKey = TAG_CFG[k].stateKey;
